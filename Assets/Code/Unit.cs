@@ -6,8 +6,11 @@ using UnityEngine;
 
 public class Unit : MonoBehaviour
 {
+    [HideInInspector]
     public System.UInt32 id;
-    public string name;
+
+    [HideInInspector]
+    public System.UInt32 playerId;
     //public VectorFixed moveAmt;
     //public VectorFixed prevComputation;
     //public UInt32 speed;

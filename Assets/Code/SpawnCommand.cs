@@ -7,17 +7,30 @@ using UnityEngine;
 public class SpawnCommand : ICommand
 {
     public VectorFixed position;
-    public Unit newUnit;
+    public GameObject newUnit;
 
-    public SpawnCommand(VectorFixed position, Unit newUnit)
+    public SpawnCommand(VectorFixed position, GameObject newUnit)
     {
         this.newUnit = newUnit;
         this.position = position;
     }
 
-    public bool Execute()
+    public bool Execute(System.UInt32 playerId)
     {
-         
+        Transform parent = GameObject.Find("Match").transform;
+
+        // instantiate new Unit at position.
+        GameObject newGo = GameObject.Instantiate(
+            newUnit,
+            position.AsUnityTransform(),
+            Quaternion.identity,
+            parent
+        );
+
+        Unit unit = newGo.GetComponent<Unit>();
+        unit.playerId = playerId;
+        unit.id = Match.nextUnitId;
+        Match.fieldedUnits.Add(unit.id, newGo);
         return true;
     }
 

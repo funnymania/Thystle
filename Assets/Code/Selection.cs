@@ -7,14 +7,16 @@ public class Selection : MonoBehaviour
 {
     private bool _isActiveCommand;
     private float _time;
+    private Match match;
     private VectorFixed moveTo;
-    private Unit test;
+    private GameObject test;
 
     private float _testTime;
     private MovementCommand move;
 
     private void Start()
     {
+        match = GameObject.Find("Match").GetComponent<Match>();
         _isActiveCommand = false;
         _time = 0;
         moveTo = new VectorFixed(
@@ -23,9 +25,14 @@ public class Selection : MonoBehaviour
             0
         );
 
-        test = GameObject.Find("Brunei").GetComponent<Unit>();
+         test = match.Brunei;
+
+        SpawnCommand spawn = new SpawnCommand(VectorFixed.zero, test);
+        spawn.Execute(0);
+        spawn.Record();
+
         move = new MovementCommand(
-            new VectorFixed(4, 0, 0), test, new Unit[] { }
+            new VectorFixed(4, 0, 0), Match.fieldedUnits[0], new GameObject[] { Match.fieldedUnits[0] }
         );
 
         Match.matchRunning = true;
@@ -44,7 +51,7 @@ public class Selection : MonoBehaviour
         }
         else if (!_isActiveCommand)
         {
-            // todo: this produces duplicate commands in replay file. We should only be  Recording one time per
+            // todo: this produces duplicate commands in replay file. We should only be Recording one time per
             //          Command.
             // From list of selected Units, if another point clicked, we will be creating a new MovementCommand.
             _isActiveCommand = move.Execute(); // to coroutine of not?
@@ -56,7 +63,7 @@ public class Selection : MonoBehaviour
             if (_time > 4)
             {
                 move = new MovementCommand(
-                    new VectorFixed(move.destination.x + 8, 0, 0), test, new Unit[] { }
+                    new VectorFixed(move.destination.x + 8, 0, 0), Match.fieldedUnits[0], new GameObject[] {  Match.fieldedUnits[0] }
                 );
                 _isActiveCommand = false;
                 _time = 0;

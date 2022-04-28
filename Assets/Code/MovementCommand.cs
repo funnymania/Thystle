@@ -4,7 +4,7 @@ using UnityEngine;
 
 // Movement
 // Destination Position
-// Leader (closest in some selection of Units to the Target position)
+// Leader (closest in some selection of GameObjects to the Target position)
 //          ClosestTo() will need to be calculated on backend.
 // SwarmMembers 
 
@@ -12,10 +12,10 @@ using UnityEngine;
 public struct MovementCommand : ICommand
 {
     public VectorFixed destination;
-    public Unit leader;
-    public Unit[] members;
+    public GameObject leader;
+    public GameObject[] members;
 
-    public MovementCommand(VectorFixed destination, Unit leader, Unit[] members)
+    public MovementCommand(VectorFixed destination, GameObject leader, GameObject[] members)
     {
         this.destination = destination;
         this.leader = leader;
@@ -26,7 +26,7 @@ public struct MovementCommand : ICommand
     {
         // move leader until point.
         VectorFixed moveTo = FFI.CrunchMovement(destination, VectorFixed.FromVector3(leader.transform.position), 2);
-        leader.transform.position = moveTo.AsUnityTransform();
+        // leader.transform.position = moveTo.AsUnityTransform();
 
         for (var i = 0; i < members.Length; i += 1)
         {

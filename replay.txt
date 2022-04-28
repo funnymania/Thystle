@@ -1,3 +1,7 @@
+0 SPAWN
+Brunei
+0 0 0
+
 0 MOVE
 4 0 0
 

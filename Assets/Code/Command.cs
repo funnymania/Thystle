@@ -9,7 +9,7 @@ public interface ICommand
     // Selection
     // 
 
-    bool Execute();
+    // bool Execute();
 
     void Record();
 }
