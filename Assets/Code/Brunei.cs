@@ -26,44 +26,45 @@ public class Brunei : Unit
         _time = 0;
 
         _isActiveCommand = true;
+        name = "Brunei";
     }
 
     private void FixedUpdate()
     {
-        if (_isActiveCommand)
-        {
-#if (UNITY_EDITOR)
-            // verify that alterations from backend are aligned with the transform
-            if (pastComputation.EqualToUnity(transform.position) == false)
-            {
-                // raise exception
-                throw new System.Exception("Position of transform drifting from correct value " 
-                    + pastComputation + " as " + transform.position);
-            }
-#endif
+//        if (_isActiveCommand)
+//        {
+//#if (UNITY_EDITOR)
+//            // verify that alterations from backend are aligned with the transform
+//            if (pastComputation.EqualToUnity(transform.position) == false)
+//            {
+//                // raise exception
+//                throw new System.Exception("Position of transform drifting from correct value " 
+//                    + pastComputation + " as " + transform.position);
+//            }
+//#endif
 
-            pastComputation = FFI.CrunchMovement(moveTo, pastComputation, 2);
-            transform.position = pastComputation.AsUnityTransform();
+//            pastComputation = FFI.CrunchMovement(moveTo, pastComputation, 2);
+//            transform.position = pastComputation.AsUnityTransform();
 
-            if (moveTo == pastComputation)
-            {
-                _isActiveCommand = false;
-            }
-        }
-        else
-        {
-            _time += Time.deltaTime;
-            if (_time > 4)
-            {
-                moveTo = new VectorFixed(
-                    moveTo.x + (UInt32)UnityEngine.Random.Range(1, 13),
-                    moveTo.y + (UInt32)UnityEngine.Random.Range(1, 13),
-                    0
-                );
-                _isActiveCommand = true;
-                _time = 0;
-            }
-        }
+//            if (moveTo == pastComputation)
+//            {
+//                _isActiveCommand = false;
+//            }
+//        }
+//        else
+//        {
+//            _time += Time.deltaTime;
+//            if (_time > 4)
+//            {
+//                moveTo = new VectorFixed(
+//                    moveTo.x + (UInt32)UnityEngine.Random.Range(1, 13),
+//                    moveTo.y + (UInt32)UnityEngine.Random.Range(1, 13),
+//                    0
+//                );
+//                _isActiveCommand = true;
+//                _time = 0;
+//            }
+//        }
     }
 }
 

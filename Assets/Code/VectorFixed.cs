@@ -19,6 +19,28 @@ public struct VectorFixed: IEquatable<VectorFixed>
     }
 
     /// <summary>
+    /// Return VectorFixed from Vector3. Raises exception if Vector3 contains 
+    /// </summary>
+    /// <param name="from"></param>
+    /// <returns></returns>
+    public static VectorFixed FromVector3(Vector3 from)
+    {
+        if (from.x != (float)Math.Truncate(from.x)
+            || (from.y) != (float)Math.Truncate(from.y)
+            || (from.z) != (float)Math.Truncate(from.z)
+        )
+        {
+            throw new System.Exception("Tried to convert from float, only support ints for now");
+        }
+
+        return new VectorFixed(
+            (UInt32)from.x,
+            (UInt32)from.y,
+            (UInt32)from.z
+        );
+    }
+
+    /// <summary>
     /// Set VectorFixed to values of Vector3.
     /// </summary>
     /// <param name="unity"></param>
@@ -53,6 +75,11 @@ public struct VectorFixed: IEquatable<VectorFixed>
             && this.y == unityVec.y
             && this.z == unityVec.z
         ;
+    }
+
+    public override string ToString()
+    {
+        return "" + x + " " + y + " " + z;
     }
 
     public override int GetHashCode() => (x, y, z).GetHashCode();

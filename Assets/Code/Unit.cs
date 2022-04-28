@@ -6,6 +6,8 @@ using UnityEngine;
 
 public class Unit : MonoBehaviour
 {
+    public System.UInt32 id;
+    public string name;
     //public VectorFixed moveAmt;
     //public VectorFixed prevComputation;
     //public UInt32 speed;
