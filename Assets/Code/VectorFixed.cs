@@ -6,12 +6,18 @@ using UnityEngine;
 
 //todo:  every character is some gameobject with a TRANSFORM used for collisions/etc and a 
 //           TRANSFORM used for sprite rendering
+
+/// <summary>
+/// Acceptable math is the following:
+///      Addition (but check overflows)
+///      Subtraction (but check overflows)
+/// </summary>
 [StructLayout(LayoutKind.Sequential)]
 public struct VectorFixed: IEquatable<VectorFixed>
 {
     public static VectorFixed zero = new VectorFixed(0, 0, 0);
-    public UInt32 x, y, z;
-    public VectorFixed(UInt32 x, UInt32 y, UInt32 z)
+    public UInt64 x, y, z;
+    public VectorFixed(UInt64 x, UInt64 y, UInt64 z)
     {
         this.x = x;
         this.y = y;
@@ -34,9 +40,9 @@ public struct VectorFixed: IEquatable<VectorFixed>
         }
 
         return new VectorFixed(
-            (UInt32)from.x,
-            (UInt32)from.y,
-            (UInt32)from.z
+            (UInt64)from.x,
+            (UInt64)from.y,
+            (UInt64)from.z
         );
     }
 
@@ -46,9 +52,9 @@ public struct VectorFixed: IEquatable<VectorFixed>
     /// <param name="unity"></param>
     public void SetToUnityTransform(Vector3 unity)
     {
-        this.x = (UInt32)unity.x;
-        this.y = (UInt32)unity.y;
-        this.z = (UInt32)unity.z;
+        this.x = (UInt64)unity.x;
+        this.y = (UInt64)unity.y;
+        this.z = (UInt64)unity.z;
     }
 
     /// <summary>
@@ -57,6 +63,7 @@ public struct VectorFixed: IEquatable<VectorFixed>
     /// <returns></returns>
     public Vector3 AsUnityTransform()
     {
+        float x = this.x;
         return new Vector3(
             this.x,
             this.y,

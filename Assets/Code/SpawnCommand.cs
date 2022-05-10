@@ -2,20 +2,23 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-// note: ICommand might be unnecessary, this might be better off decoupled
-//       in which case a ReplayFrame is <int, object>.
 public class SpawnCommand : ICommand
 {
+    public long id { get; set; }
+
     public VectorFixed position;
     public GameObject newUnit;
+    public System.UInt32 playerId;
 
-    public SpawnCommand(VectorFixed position, GameObject newUnit)
+    public SpawnCommand(VectorFixed position, GameObject newUnit, System.UInt32 playerId, long id)
     {
         this.newUnit = newUnit;
         this.position = position;
+        this.playerId = playerId;
+        this.id = id;
     }
 
-    public bool Execute(System.UInt32 playerId)
+    public bool Execute()
     {
         Transform parent = GameObject.Find("Match").transform;
 
@@ -30,6 +33,7 @@ public class SpawnCommand : ICommand
         Unit unit = newGo.GetComponent<Unit>();
         unit.playerId = playerId;
         unit.id = Match.nextUnitId;
+        Match.nextUnitId += 1;
         Match.fieldedUnits.Add(unit.id, newGo);
         return true;
     }

@@ -11,26 +11,34 @@ using UnityEngine;
 // todo: will need to support movement of members with various speeds (for now we just use leader's)
 public struct MovementCommand : ICommand
 {
-    public VectorFixed destination;
-    public GameObject leader;
-    public GameObject[] members;
+    public long id { get; set; }
 
-    public MovementCommand(VectorFixed destination, GameObject leader, GameObject[] members)
+    public VectorFixed destination;
+    public System.UInt32 leaderId;
+    public System.UInt32[] memberIds;
+
+    public MovementCommand(VectorFixed destination, System.UInt32 leader, System.UInt32[] members, long id)
     {
         this.destination = destination;
-        this.leader = leader;
-        this.members = members;
+        this.leaderId = leader;
+        memberIds = members;
+        this.id = id;
+        //for (var i = 0; i < members.Length; i += 1)
+        //{
+        //    this.memberIds[i] = members[i].GetComponent<Unit>().id;
+        //}
     }
 
     public bool Execute()
     {
         // move leader until point.
+        Unit leader = Match.fieldedUnits[leaderId].GetComponent<Unit>();
         VectorFixed moveTo = FFI.CrunchMovement(destination, VectorFixed.FromVector3(leader.transform.position), 2);
         // leader.transform.position = moveTo.AsUnityTransform();
 
-        for (var i = 0; i < members.Length; i += 1)
+        for (var i = 0; i < memberIds.Length; i += 1)
         {
-            members[i].transform.position = moveTo.AsUnityTransform();
+            Match.fieldedUnits[memberIds[i]].transform.position = moveTo.AsUnityTransform();
         }
 
         // when leader hits point, we are done.

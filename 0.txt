@@ -1,0 +1,25 @@
+1 SPAWN
+Brunei 0
+0 0 0
+
+2 MOVE
+0
+8 0 0
+
+203 MOVE
+0
+16 0 0
+
+404 MOVE
+0
+24 24 0
+
+600 SPAWN
+Brunei 1
+6 16 0
+
+800 MOVE
+1
+50 15 0
+
+1000 END

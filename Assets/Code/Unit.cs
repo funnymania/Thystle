@@ -11,6 +11,12 @@ public class Unit : MonoBehaviour
 
     [HideInInspector]
     public System.UInt32 playerId;
+
+    [HideInInspector]
+    public bool isMovable;
+
+    protected virtual void Start() { }
+
     //public VectorFixed moveAmt;
     //public VectorFixed prevComputation;
     //public UInt32 speed;

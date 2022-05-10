@@ -9,23 +9,12 @@ public class Brunei : Unit
     private VectorFixed pastComputation;
     private VectorFixed moveTo;
 
-    private bool _isActiveCommand;
-    private float _time;
-
-    private void Start()
+    protected override void Start()
     {
+        base.Start();
+        isMovable = true;
         pastComputation = VectorFixed.zero;
         currentPosition = VectorFixed.zero;
-        // moveTo = new VectorFixed(4, 2, 0);
-        moveTo = new VectorFixed(
-            (UInt32)UnityEngine.Random.Range(1, 13),
-            (UInt32)UnityEngine.Random.Range(1, 13),
-            0
-        );
-
-        _time = 0;
-
-        _isActiveCommand = true;
         name = "Brunei";
     }
 

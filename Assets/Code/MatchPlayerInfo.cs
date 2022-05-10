@@ -4,5 +4,6 @@ using UnityEngine;
 
 public class MatchPlayerInfo
 {
-
+    // Currency used for spawning units.
+    public long tangos;
 }
