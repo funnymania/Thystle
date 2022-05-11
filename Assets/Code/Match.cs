@@ -88,7 +88,7 @@ public class Match : MonoBehaviour
         {
             playerInfo[i].tangos = 1610;
             SpawnCommand sc = new SpawnCommand(
-                new VectorFixed(IntPow(2, 10 + i), IntPow(2, 10 + i), 0),
+                new VectorFixed(IntPow(2, 20 + i), IntPow(2, 20 + i), 0),
                 allUnits["Base"],
                 0,
                 nextUnitId
@@ -98,7 +98,7 @@ public class Match : MonoBehaviour
             nextUnitId += 1;
         }
 
-        VectorFixed camPos = new VectorFixed(IntPow(2, 10), IntPow(2, 10), 0);
+        VectorFixed camPos = new VectorFixed(IntPow(2, 20), IntPow(2, 20), 0);
         Vector3 unityPos = camPos.AsUnityTransform();
 
         camera.transform.position = new Vector3(unityPos.x, unityPos.y, camera.transform.position.z * WorldValues.UNIT_SIZE);

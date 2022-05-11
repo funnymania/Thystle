@@ -35,6 +35,10 @@ public class Selection : MonoBehaviour
 
         test = Match.allUnits["Brunei"];
 
+        // Size is a throwaway. I just need this to be referencing something.
+        // Without this line, _selection does not have a Length, which we need.
+        _selection = new RaycastHit[0];
+
         //SpawnCommand spawn = new SpawnCommand(VectorFixed.zero, test, 0);
         //match.commander.AddCommand(spawn);
 
@@ -43,10 +47,6 @@ public class Selection : MonoBehaviour
         _testTime = 0;
     }
 
-    // todo: "some calculation" which will be grabbing all units within some selection and generate a Selection.
-    //       The Selection will already HAVE entity refs.
-
-    // RepumpkinCan
     private void Update()
     {
         // note: input inside the player counts, even if it lies in the 'blackbars'.
@@ -59,42 +59,39 @@ public class Selection : MonoBehaviour
         {
             beginInput = Input.mousePosition;
 
-            // bug: is only accurate to every ~2565 world units, somehow.
-            //      Must implement our own math here.
-            // note: we are STILL relying on Unity to capture mouse input at the correct spaces.
-            //_dragBeginPosition = Camera.main.ScreenToWorldPoint(
-            //    new Vector3(
-            //        Input.mousePosition.x, 
-            //        Input.mousePosition.y,
-            //        Mathf.Abs(Camera.main.farClipPlane)
-            //    )
-            //);
-
-            // bug: incorrect value, should be 1000,1000, instead reads... -900000?
-            _dragBeginPosition = WorldPointForCameraSpace(Camera.main, Input.mousePosition);
-
-            Debug.DrawLine(Vector3.zero, _dragBeginPosition, Color.black, 5, false);
+            _dragBeginPosition = CursorPositionInWorldSpace(Camera.main, Input.mousePosition);
         }
         else if(Input.GetMouseButtonUp(0))
         {
-            _dragEndPosition = WorldPointForCameraSpace(Camera.main, Input.mousePosition);
-            //_dragEndPosition = Camera.main.ScreenToWorldPoint(
-            //    new Vector3(
-            //        Input.mousePosition.x,
-            //        Input.mousePosition.y,
-            //        Mathf.Abs(Camera.main.farClipPlane)
-            //    )
-            //);
+            _dragEndPosition = CursorPositionInWorldSpace(Camera.main, Input.mousePosition);
 
             float xExtents =
                 Mathf.Abs(_dragBeginPosition.x - _dragEndPosition.x);
             float yExtents =
                 Mathf.Abs(_dragBeginPosition.y - _dragEndPosition.y);
-            Vector3 boxCenter = new Vector3(
-                xExtents,
-                yExtents,
-                0
-            );
+
+            Vector3 boxCenter = Vector3.zero;
+            if (_dragBeginPosition.x >= _dragEndPosition.x)
+            {
+                boxCenter.x = _dragEndPosition.x;
+                boxCenter.x += xExtents / 2;
+            }
+            else
+            {
+                boxCenter.x = _dragBeginPosition.x;
+                boxCenter.x += xExtents / 2;
+            }
+
+            if (_dragBeginPosition.y > _dragEndPosition.y)
+            {
+                boxCenter.y = _dragEndPosition.y;
+                boxCenter.y += yExtents / 2;
+            }
+            else
+            {
+                boxCenter.y = _dragBeginPosition.y;
+                boxCenter.y += yExtents / 2;
+            }
 
             Debug.Log(boxCenter);
 
@@ -105,31 +102,9 @@ public class Selection : MonoBehaviour
                 new Vector3(xExtents / 2, yExtents / 2, 0),
                 Vector3.forward
             );
-
+            
             ProcessSelection(_selection);
 
-            if (_selection.Length > 0)
-            {
-                // spawn Brunei from base.
-                if (Input.GetKeyUp(KeyCode.A) && _baseIndex != -1)
-                {
-                    Base aBase = _selection[_baseIndex].transform.GetComponent<Base>();
-
-                    // todo bogman this is the point where our questions really matter.
-                    //       If 24 bit precision is enough, then we can utilize the Transform
-                    //       associated with a unit. However if not, then we need to either 
-                    SpawnCommand sc = new SpawnCommand(
-                        VectorFixed.FromVector3(
-                            aBase.transform.position + aBase.spawnOffset.AsUnityTransform()
-                        ),
-                        Match.allUnits["Brunei"],
-                        0,
-                        Match.nextUnitId
-                    );
-
-                    match.commander.nextId += 1;
-                }
-            }
 
             Debug.Log("Selected " + _selection.Length + " units.");
         }
@@ -144,15 +119,19 @@ public class Selection : MonoBehaviour
                 unitIds[i] = _selection[i].transform.GetComponent<Unit>().id;
             }
 
+            VectorFixed cursorWorld = VectorFixed.TruncateToVectorFixed(
+                    CursorPositionInWorldSpace(Camera.main, Input.mousePosition)
+            );
+
             // get closest member, mark as leader.
             var leaderId = FFI.ClosestMemberTo(
-                VectorFixed.FromVector3(Camera.main.ScreenPointToRay(Input.mousePosition).origin),
+                cursorWorld,
                 vectors,
                 (ulong)vectors.Length
             );
 
             MovementCommand mc = new MovementCommand(
-                VectorFixed.FromVector3(Camera.main.ScreenPointToRay(Input.mousePosition).origin),
+                cursorWorld,
                 (uint)leaderId, 
                 unitIds,
                 match.commander.nextId
@@ -161,27 +140,29 @@ public class Selection : MonoBehaviour
             match.commander.AddCommand(mc);
         }
 
-        //if (_testTime > 10)
-        //{
-        //    Match.matchEnd = true;
-        //}
-        //else
-        //{
-        //    _time += Time.deltaTime;
-        //    if (_time > 4)
-        //    {
-        //        move = new MovementCommand(
-        //            new VectorFixed(move.destination.x + 8, 0, 0), 
-        //            Match.fieldedUnits[0].GetComponent<Unit>().id, 
-        //            new System.UInt32[] { Match.fieldedUnits[0].GetComponent<Unit>().id }
-        //        );
+        if (_selection.Length > 0)
+        {
+            // spawn Brunei from base.
+            if (Input.GetKeyUp(KeyCode.A) && _baseIndex != -1)
+            {
+                Base aBase = _selection[_baseIndex].transform.GetComponent<Base>();
 
-        //        match.commander.AddCommand(move);
-        //        _time = 0;
-        //    }
-        //}
+                // todo bogman this is the point where our questions really matter.
+                //       If 24 bit precision is enough, then we can utilize the Transform
+                //       associated with a unit. However if not, then we need to either 
+                SpawnCommand sc = new SpawnCommand(
+                    VectorFixed.FromVector3(
+                        aBase.transform.position + aBase.spawnOffset.AsUnityTransform()
+                    ),
+                    Match.allUnits["Brunei"],
+                    0,
+                    Match.nextUnitId
+                );
 
-        //_testTime += Time.deltaTime;
+                match.commander.nextId += 1;
+                match.commander.AddCommand(sc);
+            }
+        }
     }
 
     /// <summary>
@@ -190,7 +171,7 @@ public class Selection : MonoBehaviour
     /// <param name="cam"></param>
     /// <param name="cursorPosition"></param>
     /// <returns></returns>
-    public Vector3 WorldPointForCameraSpace(Camera cam, Vector3 cursorPosition)
+    public Vector3 CursorPositionInWorldSpace(Camera cam, Vector3 cursorPosition)
     {
         float fovRadians = (cam.fieldOfView / 2) * Mathf.PI / 180;
 
@@ -208,6 +189,31 @@ public class Selection : MonoBehaviour
 
         return new Vector3(cursorXWorld, cursorYWorld);
     }
+
+    //public Vector3 BoxFromDragPoints(Vector3 dragBegin, Vector3 dragEnd)
+    //{
+    //    Vector3 box = Vector3.zero;
+    //    if (dragBegin.x > dragEnd.x)
+    //    {
+    //        box.x = (dragBegin.x - dragEnd.x) / 2;
+    //        box.x
+    //    }
+    //    else
+    //    {
+
+    //    }
+
+    //    if (dragBegin.y > dragEnd.y)
+    //    {
+
+    //    }
+    //    else
+    //    {
+
+    //    }
+
+    //    return box;
+    //}
 
     /// <summary>
     /// Changes bool/index flags to describe what is in a user selection.

@@ -25,7 +25,7 @@ public struct VectorFixed: IEquatable<VectorFixed>
     }
 
     /// <summary>
-    /// Return VectorFixed from Vector3. Raises exception if Vector3 contains 
+    /// Return VectorFixed from Vector3. Raises exception if Vector3 contains non-integers.
     /// </summary>
     /// <param name="from"></param>
     /// <returns></returns>
@@ -43,6 +43,15 @@ public struct VectorFixed: IEquatable<VectorFixed>
             (UInt64)from.x,
             (UInt64)from.y,
             (UInt64)from.z
+        );
+    }
+
+    public static VectorFixed TruncateToVectorFixed(Vector3 toCull)
+    {
+        return new VectorFixed(
+            (ulong)Math.Truncate(toCull.x),
+            (ulong)Math.Truncate(toCull.y),
+            (ulong)Math.Truncate(toCull.z)
         );
     }
 
