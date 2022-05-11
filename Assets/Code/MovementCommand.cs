@@ -39,7 +39,8 @@ public struct MovementCommand : ICommand
         for (var i = 0; i < memberIds.Length; i += 1)
         {
             // bug: this moves all members of a group to leader's positiion.
-            Match.fieldedUnits[memberIds[i]].transform.position = moveTo.AsUnityTransform();
+            Match.fieldedUnits[memberIds[i]].transform.position += moveTo.AsUnityTransform() - leader.transform.position; // potential solution
+            // Match.fieldedUnits[memberIds[i]].transform.position = moveTo.AsUnityTransform();
         }
 
         // when leader hits point, we are done.
