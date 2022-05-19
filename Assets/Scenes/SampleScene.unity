@@ -335,6 +335,8 @@ MonoBehaviour:
   id: 0
   playerId: 0
   isMovable: 0
+  defaultSpeed: 0
+  isMoving: 0
 --- !u!65 &310477984
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -679,6 +681,8 @@ MonoBehaviour:
   id: 0
   playerId: 0
   isMovable: 0
+  defaultSpeed: 0
+  isMoving: 0
 --- !u!4 &1893846879 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 5101057110137353079, guid: ab0fb42fb78b43c448639b397e91b246, type: 3}

@@ -15,7 +15,37 @@ public class Unit : MonoBehaviour
     [HideInInspector]
     public bool isMovable;
 
+    [HideInInspector]
+    public ulong defaultSpeed;
+
+    public bool isMoving;
+
     protected virtual void Start() { }
+
+    // todo: implement editorscript colliders.
+    // public Shape[] colliders = { get => GetColliders(); }
+
+    public (Line[], Circle[]) GetColliders()
+    {
+        List<Circle> circleCols = new List<Circle>();
+        CircleMcCollider[] circles= Match.fieldedUnits[id]
+            .GetComponentsInChildren<CircleMcCollider>();
+
+        foreach (CircleMcCollider circle in circles)
+        {
+            circleCols.Add(circle.circle);
+        }
+
+        List<Line> lineCols = new List<Line>();
+        LineMcCollider[] lines = Match.fieldedUnits[id]
+            .GetComponentsInChildren<LineMcCollider>();
+        foreach (LineMcCollider line in lines)
+        {
+            lineCols.Add(line.line);
+        }
+
+        return (lineCols.ToArray(), circleCols.ToArray());
+    }
 
     //public VectorFixed moveAmt;
     //public VectorFixed prevComputation;

@@ -97,6 +97,8 @@ public class Selection : MonoBehaviour
 
             Debug.DrawLine(_dragBeginPosition, _dragEndPosition, Color.black, 5, false);
 
+            // todo: colliders will interrupt movement, visual indicators for editorscript colliders
+            //       will be used instead.
             _selection = Physics.BoxCastAll(
                 boxCenter,
                 new Vector3(xExtents / 2, yExtents / 2, 0),
@@ -104,7 +106,6 @@ public class Selection : MonoBehaviour
             );
             
             ProcessSelection(_selection);
-
 
             Debug.Log("Selected " + _selection.Length + " units.");
         }
@@ -147,7 +148,7 @@ public class Selection : MonoBehaviour
             {
                 Base aBase = _selection[_baseIndex].transform.GetComponent<Base>();
 
-                // todo bogman this is the point where our questions really matter.
+                // todo: this is the point where our questions really matter.
                 //       If 24 bit precision is enough, then we can utilize the Transform
                 //       associated with a unit. However if not, then we need to either 
                 SpawnCommand sc = new SpawnCommand(

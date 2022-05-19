@@ -14,6 +14,7 @@ public class Match : MonoBehaviour
     public static bool isReplay;
     public static Replay replay;
     public static Dictionary<System.UInt32, GameObject> fieldedUnits;
+    public static Dictionary<System.UInt32, GameObject> staticUnits;
 
     // Rely on dictionary for quick lookup during runtime.
     public static Dictionary<string, GameObject> allUnits;

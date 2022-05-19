@@ -8,6 +8,7 @@ public class Base : Unit
 
     protected override void Start()
     {
+        base.Start();
         name = "Base";
         isMovable = false;
     }
