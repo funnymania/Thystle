@@ -78,7 +78,7 @@ public struct MovementCommand : ICommand
 
         for (var i = 0; i < memberIds.Length; i += 1)
         {
-            Match.fieldedUnits[memberIds[i]].transform.position = moveTo[i].AsUnityTransform();
+            Match.fieldedUnits[memberIds[i]].transform.position += moveTo[i].AsUnityTransform() - leader.transform.position; // potential solution
         }
 
         // when leader hits point, we are done.
