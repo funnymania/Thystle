@@ -86,6 +86,9 @@ public struct MovementCommand : ICommand
 
         // testing....
 
+        // idea: what if there is another entity that needs to move past?
+        //       Maybe the answer is to jump over them? just like if it was a wall
+        //       the answer would be to climb it ofc
         // note: moveTo is a copy of the data passed from backend. 
         // perf: memory inefficient...
         (System.IntPtr releaseMe, VectorFixed[] moveTo) = FFI.MoveEverything(

@@ -47,6 +47,7 @@ public class Selection : MonoBehaviour
         _testTime = 0;
     }
 
+    // todo: do not allow a player to be able to move their opponents pieces (or spawn from their bases, etc)
     private void Update()
     {
         // note: input inside the player counts, even if it lies in the 'blackbars'.
@@ -136,6 +137,8 @@ public class Selection : MonoBehaviour
                     (ulong)vectors.Count
                 );
 
+                // note: currently only supporting single player. whichever id a player has would be resolved
+                //       in netcode in multiplayer.
                 MovementCommand mc = new MovementCommand(
                     cursorWorld,
                     unitIds[(int)leaderId], 

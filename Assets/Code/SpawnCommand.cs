@@ -5,10 +5,11 @@ using UnityEngine;
 public class SpawnCommand : ICommand
 {
     public long id { get; set; }
+    public uint playerId { get; set; }
 
     public VectorFixed position;
     public GameObject newUnit;
-    public System.UInt32 playerId;
+    // public System.UInt32 playerId;
 
     public SpawnCommand(VectorFixed position, GameObject newUnit, System.UInt32 playerId, long id)
     {

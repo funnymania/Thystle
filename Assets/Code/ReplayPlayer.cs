@@ -132,7 +132,8 @@ public class ReplayPlayer : MonoBehaviour
                         VectorFixed commandPosition = new VectorFixed(
                             x, y, z
                         );
-                        newCommand = new MovementCommand(commandPosition,
+                        newCommand = new MovementCommand(
+                            commandPosition,
                             units[0], units, commandId);
                         break;
                     case "SPAWN":

@@ -166,7 +166,6 @@ public class Match : MonoBehaviour
                 frameNum = replay.actions[i].frame.ToString();
                 switch (replay.actions[i].command)
                 {
-                    // todo: must add player id to commands. 
                     // todo: replay data must also contain map information
                     case MovementCommand mc:
                         command = "MOVE\r\n";
