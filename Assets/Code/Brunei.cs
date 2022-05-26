@@ -15,7 +15,7 @@ public class Brunei : Unit
         isMovable = true;
         pastComputation = VectorFixed.zero;
         currentPosition = VectorFixed.zero;
-        defaultSpeed = 6;
+        defaultSpeed = 45;
         name = "Brunei";
     }
 

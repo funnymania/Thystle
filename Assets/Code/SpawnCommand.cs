@@ -35,6 +35,7 @@ public class SpawnCommand : ICommand
         unit.id = Match.nextUnitId;
         Match.nextUnitId += 1;
         Match.fieldedUnits.Add(unit.id, newGo);
+        Match.staticUnits.Add(unit.id, newGo);
         return true;
     }
 

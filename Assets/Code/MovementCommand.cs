@@ -9,6 +9,7 @@ using UnityEngine;
 // SwarmMembers 
 
 // todo: will need to support movement of members with various speeds (for now we just use leader's)
+// todo: support moving Units while they are already being moved.
 public struct MovementCommand : ICommand
 {
     public long id { get; set; }
@@ -52,14 +53,18 @@ public struct MovementCommand : ICommand
             movement.end = destination;
             movement.circles = circles;
             movement.lines = lines;
+            movement.circlesLen = (ulong)circles.Length;
+            movement.linesLen = (ulong)lines.Length;
             movement.speed = unit.defaultSpeed;
 
             movements.Add(movement);
         }
 
         // perf: possibly too much memory churn
-        List<Line> staticLines = new List<Line>();
-        List<Circle> staticCircles = new List<Circle>();
+        List<LineCollider> staticLines = new List<LineCollider>();
+        List<CircleCollider> staticCircles = new List<CircleCollider>();
+
+        // bug: should be bases in staticCircles
         foreach (GameObject gameObject in Match.staticUnits.Values)
         {
             var (lines, circles) = gameObject.GetComponent<Unit>().GetColliders();
@@ -67,7 +72,23 @@ public struct MovementCommand : ICommand
             staticCircles.AddRange(circles);
         }
 
-        VectorFixed[] moveTo = FFI.MoveEverything(
+        // testing....
+        //VectorFixed[] banana = FFI.SimpleResults(
+        //    staticLines.ToArray(),
+        //    staticCircles.ToArray(),
+        //    movements.ToArray(),
+        //    (ulong)staticLines.Count,
+        //    (ulong)staticCircles.Count,
+        //    (ulong)movements.Count
+        //);
+
+        //Debug.Log("break..");
+
+        // testing....
+
+        // note: moveTo is a copy of the data passed from backend. 
+        // perf: memory inefficient...
+        (System.IntPtr releaseMe, VectorFixed[] moveTo) = FFI.MoveEverything(
             staticLines.ToArray(),
             staticCircles.ToArray(),
             movements.ToArray(),
@@ -78,10 +99,18 @@ public struct MovementCommand : ICommand
 
         for (var i = 0; i < memberIds.Length; i += 1)
         {
-            Match.fieldedUnits[memberIds[i]].transform.position += moveTo[i].AsUnityTransform() - leader.transform.position; // potential solution
+            Match.fieldedUnits[memberIds[i]].transform.position = moveTo[i].AsUnityTransform();
         }
 
+        // note: right now, we only conclude the movement when the leader
+        //       reaches their destination. Even if the other objects haven't made it, or have bumped into
+        //       a collider. This may be fine for now, but you may WANT the Units lagging behind to "catch up"
+        //       and conclude right next to the leader. Right now, this does not happen.
+        //       In a way, it might be better to not conclude the MovementCommand AT ALL. But this is a topic for
+        //       later review...
         // when leader hits point, we are done.
+        // if leader's starting position is returned back, they have collided, and we need to return true.
+        // else we are presumably still in motion.
         if (destination == moveTo[0])
         {
             // add all memberIds back to table.
@@ -90,10 +119,23 @@ public struct MovementCommand : ICommand
                 Match.staticUnits[memberIds[i]] = Match.fieldedUnits[memberIds[i]];
             }
 
+            FFI.ReleaseMovementResults(releaseMe);
+            return true;
+        }
+        else if (movements[0].begin == moveTo[0])
+        {
+            // add all memberIds back to table.
+            for (var i = 0; i < memberIds.Length; i += 1)
+            {
+                Match.staticUnits[memberIds[i]] = Match.fieldedUnits[memberIds[i]];
+            }
+
+            FFI.ReleaseMovementResults(releaseMe);
             return true;
         }
         else
         {
+            FFI.ReleaseMovementResults(releaseMe);
             return false;
         }
     }

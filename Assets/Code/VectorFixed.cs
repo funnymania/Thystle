@@ -13,6 +13,7 @@ using UnityEngine;
 ///      Subtraction (but check overflows)
 /// </summary>
 [StructLayout(LayoutKind.Sequential)]
+[Serializable]
 public struct VectorFixed: IEquatable<VectorFixed>
 {
     public static VectorFixed zero = new VectorFixed(0, 0, 0);

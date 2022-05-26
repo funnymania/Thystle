@@ -78,6 +78,7 @@ public class Match : MonoBehaviour
         nextUnitId = 0;
         replay = new Replay();
         fieldedUnits = new Dictionary<uint, GameObject>();
+        staticUnits = new Dictionary<uint, GameObject>();
 
         // Subscribe commander to the pulse of FixedUpdate.
         commander = new CommandCommander();
@@ -95,8 +96,6 @@ public class Match : MonoBehaviour
                 nextUnitId
             );
             commander.AddCommand(sc);
-
-            nextUnitId += 1;
         }
 
         VectorFixed camPos = new VectorFixed(IntPow(2, 20), IntPow(2, 20), 0);

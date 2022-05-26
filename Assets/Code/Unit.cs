@@ -25,23 +25,23 @@ public class Unit : MonoBehaviour
     // todo: implement editorscript colliders.
     // public Shape[] colliders = { get => GetColliders(); }
 
-    public (Line[], Circle[]) GetColliders()
+    public (LineCollider[], CircleCollider[]) GetColliders()
     {
-        List<Circle> circleCols = new List<Circle>();
+        List<CircleCollider> circleCols = new List<CircleCollider>();
         CircleMcCollider[] circles= Match.fieldedUnits[id]
             .GetComponentsInChildren<CircleMcCollider>();
 
         foreach (CircleMcCollider circle in circles)
         {
-            circleCols.Add(circle.circle);
+            circleCols.Add(circle.getCollider());
         }
 
-        List<Line> lineCols = new List<Line>();
+        List<LineCollider> lineCols = new List<LineCollider>();
         LineMcCollider[] lines = Match.fieldedUnits[id]
             .GetComponentsInChildren<LineMcCollider>();
         foreach (LineMcCollider line in lines)
         {
-            lineCols.Add(line.line);
+            lineCols.Add(line.getCollider());
         }
 
         return (lineCols.ToArray(), circleCols.ToArray());

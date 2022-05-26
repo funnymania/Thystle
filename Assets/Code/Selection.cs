@@ -112,12 +112,15 @@ public class Selection : MonoBehaviour
         else if (Input.GetMouseButtonUp(1) && _selection.Length > 0) // Right click.
         {
             // get all positions and members.
-            VectorFixed[] vectors = new VectorFixed[_selection.Length];
-            uint[] unitIds = new uint[_selection.Length];
+            List<VectorFixed> vectors = new List<VectorFixed>();
+            List<uint> unitIds = new List<uint>();
             for (var i = 0; i < _selection.Length; i += 1)
             {
-                vectors[i] = VectorFixed.FromVector3(_selection[i].transform.position);
-                unitIds[i] = _selection[i].transform.GetComponent<Unit>().id;
+                if (_selection[i].transform.gameObject.GetComponent<Unit>().isMovable)
+                {
+                    vectors.Add(VectorFixed.FromVector3(_selection[i].transform.position));
+                    unitIds.Add(_selection[i].transform.GetComponent<Unit>().id);
+                }
             }
 
             VectorFixed cursorWorld = VectorFixed.TruncateToVectorFixed(
@@ -125,20 +128,23 @@ public class Selection : MonoBehaviour
             );
 
             // get closest member, mark as leader.
-            var leaderId = FFI.ClosestMemberTo(
-                cursorWorld,
-                vectors,
-                (ulong)vectors.Length
-            );
+            if (vectors.Count != 0)
+            {
+                var leaderId = FFI.ClosestMemberTo(
+                    cursorWorld,
+                    vectors.ToArray(),
+                    (ulong)vectors.Count
+                );
 
-            MovementCommand mc = new MovementCommand(
-                cursorWorld,
-                (uint)leaderId, 
-                unitIds,
-                match.commander.nextId
-            );
+                MovementCommand mc = new MovementCommand(
+                    cursorWorld,
+                    unitIds[(int)leaderId], 
+                    unitIds.ToArray(),
+                    match.commander.nextId
+                );
 
-            match.commander.AddCommand(mc);
+                match.commander.AddCommand(mc);
+            }
         }
 
         if (_selection.Length > 0)
@@ -148,9 +154,7 @@ public class Selection : MonoBehaviour
             {
                 Base aBase = _selection[_baseIndex].transform.GetComponent<Base>();
 
-                // todo: this is the point where our questions really matter.
-                //       If 24 bit precision is enough, then we can utilize the Transform
-                //       associated with a unit. However if not, then we need to either 
+                // todo: spawning a unit must ALSO involve a movement command.
                 SpawnCommand sc = new SpawnCommand(
                     VectorFixed.FromVector3(
                         aBase.transform.position + aBase.spawnOffset.AsUnityTransform()
