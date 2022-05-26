@@ -4,9 +4,6 @@ using System;
 using System.Runtime.InteropServices;
 using UnityEngine;
 
-//todo:  every character is some gameobject with a TRANSFORM used for collisions/etc and a 
-//           TRANSFORM used for sprite rendering
-
 /// <summary>
 /// Acceptable math is the following:
 ///      Addition (but check overflows)

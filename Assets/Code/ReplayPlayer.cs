@@ -51,7 +51,7 @@ public class ReplayPlayer : MonoBehaviour
         commander = new CommandCommander();
         matchLoop += commander.Execution;
 
-        // todo allow camera to look at player one's base.
+        // todo: allow camera to look at player one's base.
 
         //camera.transform.LookAt(Vector3.zero);
 

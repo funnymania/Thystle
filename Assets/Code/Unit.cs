@@ -22,9 +22,6 @@ public class Unit : MonoBehaviour
 
     protected virtual void Start() { }
 
-    // todo: implement editorscript colliders.
-    // public Shape[] colliders = { get => GetColliders(); }
-
     public (LineCollider[], CircleCollider[]) GetColliders()
     {
         List<CircleCollider> circleCols = new List<CircleCollider>();

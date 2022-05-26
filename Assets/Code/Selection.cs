@@ -98,8 +98,6 @@ public class Selection : MonoBehaviour
 
             Debug.DrawLine(_dragBeginPosition, _dragEndPosition, Color.black, 5, false);
 
-            // todo: colliders will interrupt movement, visual indicators for editorscript colliders
-            //       will be used instead.
             _selection = Physics.BoxCastAll(
                 boxCenter,
                 new Vector3(xExtents / 2, yExtents / 2, 0),

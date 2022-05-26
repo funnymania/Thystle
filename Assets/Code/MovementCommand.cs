@@ -8,7 +8,6 @@ using UnityEngine;
 //          ClosestTo() will need to be calculated on backend.
 // SwarmMembers 
 
-// todo: will need to support movement of members with various speeds (for now we just use leader's)
 // todo: support moving Units while they are already being moved.
 public struct MovementCommand : ICommand
 {
