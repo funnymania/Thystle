@@ -59,6 +59,21 @@ public struct VectorFixed: IEquatable<VectorFixed>
         );
     }
 
+    /// <summary>
+    /// Does NOT guard against overflow. Do not use unless you KNOW there can be no overflow.
+    /// </summary>
+    /// <param name="one"></param>
+    /// <param name="other"></param>
+    /// <returns></returns>
+    public VectorFixed AddV3(Vector3 other)
+    {
+        return new VectorFixed(
+            (ulong)(this.x + other.x),
+            (ulong)(this.y + other.y),
+            (ulong)(this.z + other.z)
+        );
+    }
+
     public static VectorFixed TruncateToVectorFixed(Vector3 toCull)
     {
         return new VectorFixed(

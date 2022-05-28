@@ -4,12 +4,13 @@ using UnityEngine;
 
 public class Base : Unit
 {
-    public VectorFixed spawnOffset = VectorFixed.zero;
+    public Vector3 spawnOffset = Vector3.zero;
 
     protected override void Start()
     {
         base.Start();
         name = "Base";
         isMovable = false;
+        spawnOffset = new Vector3(-3, -2, 0);
     }
 }

@@ -157,7 +157,7 @@ public class Selection : MonoBehaviour
 
                 // todo: spawning a unit must ALSO involve a movement command.
                 SpawnCommand sc = new SpawnCommand(
-                    VectorFixed.AddUnsafe(aBase.truePosition, aBase.spawnOffset),
+                    aBase.truePosition.AddV3(aBase.spawnOffset),
                     Match.allUnits["Brunei"],
                     0,
                     Match.nextUnitId
