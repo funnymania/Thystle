@@ -48,7 +48,8 @@ public struct MovementCommand : ICommand
             var (lines, circles) = unit.GetColliders();
 
             Movement movement = new Movement();
-            movement.begin = VectorFixed.FromVector3(Match.fieldedUnits[memberIds[i]].transform.position);
+            // movement.begin = VectorFixed.FromVector3(Match.fieldedUnits[memberIds[i]].transform.position);
+            movement.begin = unit.truePosition;
             movement.end = destination;
             movement.circles = circles;
             movement.lines = lines;
@@ -71,20 +72,6 @@ public struct MovementCommand : ICommand
             staticCircles.AddRange(circles);
         }
 
-        // testing....
-        //VectorFixed[] banana = FFI.SimpleResults(
-        //    staticLines.ToArray(),
-        //    staticCircles.ToArray(),
-        //    movements.ToArray(),
-        //    (ulong)staticLines.Count,
-        //    (ulong)staticCircles.Count,
-        //    (ulong)movements.Count
-        //);
-
-        //Debug.Log("break..");
-
-        // testing....
-
         // idea: what if there is another entity that needs to move past?
         //       Maybe the answer is to jump over them? just like if it was a wall
         //       the answer would be to climb it ofc
@@ -102,6 +89,7 @@ public struct MovementCommand : ICommand
         for (var i = 0; i < memberIds.Length; i += 1)
         {
             Match.fieldedUnits[memberIds[i]].transform.position = moveTo[i].AsUnityTransform();
+            Match.fieldedUnits[memberIds[i]].GetComponent<Unit>().truePosition = moveTo[i];
         }
 
         // note: right now, we only conclude the movement when the leader

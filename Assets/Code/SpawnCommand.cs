@@ -34,6 +34,7 @@ public class SpawnCommand : ICommand
         Unit unit = newGo.GetComponent<Unit>();
         unit.playerId = playerId;
         unit.id = Match.nextUnitId;
+        unit.truePosition = position;
         Match.nextUnitId += 1;
         Match.fieldedUnits.Add(unit.id, newGo);
         Match.staticUnits.Add(unit.id, newGo);

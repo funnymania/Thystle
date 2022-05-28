@@ -12,6 +12,16 @@ public class Unit : MonoBehaviour
     [HideInInspector]
     public System.UInt32 playerId;
 
+    // note: truePosition is the "correct" position of the Unit. In Unity, the bit resolution is 24-bit, in
+    //       the form of floats. If we need higher resolution than that, which is very probably, truePosition will
+    //       represent that higher resolution, and the position/scale/rotation for example would be an
+    //       approximation. However, because every frame the visual position in Unity is rounded from this value,
+    //       we are hoping this discrepency is negligible. For integers 0 - 2^24, visuals will match reality.
+    //       Greater than 2^24 will be hopefully indistinguishably off. This has no effect on replays/collision
+    //       and again, we hope is a complete non-issue.
+    [HideInInspector]
+    public VectorFixed truePosition;
+
     [HideInInspector]
     public bool isMovable;
 

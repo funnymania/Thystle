@@ -44,6 +44,21 @@ public struct VectorFixed: IEquatable<VectorFixed>
         );
     }
 
+    /// <summary>
+    /// Does NOT guard against overflow. Do not use unless you KNOW there can be no overflow.
+    /// </summary>
+    /// <param name="one"></param>
+    /// <param name="other"></param>
+    /// <returns></returns>
+    public static VectorFixed AddUnsafe(VectorFixed one, VectorFixed other)
+    {
+        return new VectorFixed(
+            one.x + other.x,
+            one.y + other.y,
+            one.z + other.z
+        );
+    }
+
     public static VectorFixed TruncateToVectorFixed(Vector3 toCull)
     {
         return new VectorFixed(
@@ -70,7 +85,6 @@ public struct VectorFixed: IEquatable<VectorFixed>
     /// <returns></returns>
     public Vector3 AsUnityTransform()
     {
-        float x = this.x;
         return new Vector3(
             this.x,
             this.y,
