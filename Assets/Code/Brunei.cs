@@ -15,7 +15,7 @@ public class Brunei : Unit
         isMovable = true;
         pastComputation = VectorFixed.zero;
         currentPosition = VectorFixed.zero;
-        defaultSpeed = 45;
+        defaultSpeed = (ulong)(1 * WorldValues.UNIT_SIZE);
         name = "Brunei";
     }
 
