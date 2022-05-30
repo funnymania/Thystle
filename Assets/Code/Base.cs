@@ -11,6 +11,6 @@ public class Base : Unit
         base.Start();
         name = "Base";
         isMovable = false;
-        spawnOffset = new Vector3(-3, -2, 0);
+        spawnOffset = new Vector3(-3 * WorldValues.UNIT_SIZE, -2 * WorldValues.UNIT_SIZE, 0);
     }
 }

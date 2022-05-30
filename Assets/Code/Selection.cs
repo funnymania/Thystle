@@ -156,6 +156,7 @@ public class Selection : MonoBehaviour
                 Base aBase = _selection[_baseIndex].transform.GetComponent<Base>();
 
                 // todo: spawning a unit must ALSO involve a movement command.
+                // bug: scale compensation not working.
                 SpawnCommand sc = new SpawnCommand(
                     aBase.truePosition.AddV3(aBase.spawnOffset),
                     Match.allUnits["Brunei"],
