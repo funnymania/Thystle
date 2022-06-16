@@ -21,7 +21,7 @@ public class SpawnCommand : ICommand
 
     public bool Execute()
     {
-        Transform parent = GameObject.Find("Match").transform;
+        Transform parent = GameObject.Find("Map").transform;
 
         // instantiate new Unit at position.
         GameObject newGo = GameObject.Instantiate(
@@ -38,6 +38,8 @@ public class SpawnCommand : ICommand
         Match.nextUnitId += 1;
         Match.fieldedUnits.Add(unit.id, newGo);
         Match.staticUnits.Add(unit.id, newGo);
+        if (unit.isMovable == false)
+            Match.ConstrainNavMesh();
         return true;
     }
 

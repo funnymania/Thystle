@@ -62,6 +62,18 @@ public static class FFI
     }
 
     /// <summary>
+    /// Returns the closest of all units to some position.
+    /// </summary>
+    /// <param name="position"></param>
+    /// <param name="unitPositions"></param>
+    /// <param name="length"></param>
+    /// <returns></returns>
+    public static Int64 SideOfLine(LineCollider line, CircleCollider point)
+    {
+        return side_of_line(line, point);
+    }
+
+    /// <summary>
     /// Frees memory used to hold calculated movement on the backend.
     /// Neglecting to call this each frame is a memory leak, and is fatal.
     /// </summary>
@@ -117,4 +129,7 @@ public static class FFI
 
     [DllImport("thystle_move")]
     static extern UInt64 closest_member_to(VectorFixed position, VectorFixed[] unit_positions, UInt64 length);
+
+    [DllImport("thystle_move")]
+    static extern Int64 side_of_line(LineCollider line, CircleCollider circle);
 }

@@ -9,9 +9,10 @@ public class Brunei : Unit
     private VectorFixed pastComputation;
     private VectorFixed moveTo;
 
-    protected override void Start()
+
+    protected override void Awake()
     {
-        base.Start();
+        base.Awake();
         isMovable = true;
         pastComputation = VectorFixed.zero;
         currentPosition = VectorFixed.zero;

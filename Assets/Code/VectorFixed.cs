@@ -34,7 +34,8 @@ public struct VectorFixed: IEquatable<VectorFixed>
             || (from.z) != (float)Math.Truncate(from.z)
         )
         {
-            throw new System.Exception("Tried to convert from float, only support ints for now");
+            // testing: just ignoring for now.
+            // throw new System.Exception("Tried to convert from float, only support ints for now");
         }
 
         return new VectorFixed(

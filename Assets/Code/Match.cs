@@ -26,6 +26,7 @@ public class Match : MonoBehaviour
     public ReplayPlayer replayPlayer;
     public CommandCommander commander;
 
+    private NavMesh navMesh;
     private bool replayGo;
     private long commandId;
 
@@ -47,6 +48,24 @@ public class Match : MonoBehaviour
             currentFrame += 1;
             matchLoop?.Invoke();
         }
+    }
+
+    /// <summary>
+    /// Gets all Units which affect the navmesh.
+    /// </summary>
+    /// <returns></returns>
+    public static List<GameObject> getMeshConstrainingUnits()
+    {
+        List<GameObject> meshConstrainers = new List<GameObject>();
+        foreach(GameObject unit in staticUnits.Values)
+        {
+            if (unit.GetComponent<Unit>().isMovable == false)
+            {
+                meshConstrainers.Add(unit);
+            }
+        }
+
+        return meshConstrainers;
     }
 
     // Real time match setup.
@@ -84,15 +103,24 @@ public class Match : MonoBehaviour
         commander = new CommandCommander();
         matchLoop += commander.Execution;
 
+        // we use these to represent circles until we can automatically do it according to game developer
+        //  adjustment.
+        CircleAtlas.Init();
+
+        // load the map.
+        navMesh = new NavMesh();
+
         // Initialize both players.
         playerInfo = new MatchPlayerInfo[2] { new MatchPlayerInfo(), new MatchPlayerInfo() };
-        for (System.UInt64 i = 0; i < (System.UInt64)playerInfo.Length; i++)
+
+        // test: setting player count to 1.
+        for (System.UInt64 i = 0; i < (System.UInt64)playerInfo.Length - 1; i++)
         {
             playerInfo[i].tangos = 1610;
             SpawnCommand sc = new SpawnCommand(
                 new VectorFixed(
-                    IntPow(2, (ulong)WorldValues.MIN_SUPPORTED_BIT_RES - 2 + i), 
-                    IntPow(2, (ulong)WorldValues.MIN_SUPPORTED_BIT_RES - 2 + i), 
+                    IntPow(2, (ulong)WorldValues.MIN_SUPPORTED_BIT_RES - 12 + i), 
+                    IntPow(2, (ulong)WorldValues.MIN_SUPPORTED_BIT_RES - 12 + i), 
                     0
                 ),
                 allUnits["Base"],
@@ -102,9 +130,20 @@ public class Match : MonoBehaviour
             commander.AddCommand(sc);
         }
 
+        // note: at this point, this would be the map and all its walls/ledges, but without spawnable
+        //       units. On spawning a unit that constains the mesh, then we will Repath again.
+        List<GameObject> gos = getMeshConstrainingUnits();
+        List<CircleMcCollider> circles = new List<CircleMcCollider>();
+        foreach(GameObject go in gos)
+        {
+            CircleMcCollider[] circleCols = go.GetComponentsInChildren<CircleMcCollider>();
+            circles.AddRange(circleCols);
+        }
+        NavMesh.Repath(circles);
+
         VectorFixed camPos = new VectorFixed(
-            IntPow(2, (ulong)WorldValues.MIN_SUPPORTED_BIT_RES - 2), 
-            IntPow(2, (ulong)WorldValues.MIN_SUPPORTED_BIT_RES - 2), 
+            IntPow(2, (ulong)WorldValues.MIN_SUPPORTED_BIT_RES - 12), 
+            IntPow(2, (ulong)WorldValues.MIN_SUPPORTED_BIT_RES - 12), 
             0
         );
         Vector3 unityPos = camPos.AsUnityTransform();
@@ -121,6 +160,18 @@ public class Match : MonoBehaviour
         transform.localScale = new Vector3(WorldValues.UNIT_SIZE, WorldValues.UNIT_SIZE, WorldValues.UNIT_SIZE);
 
         matchRunning = true;
+    }
+
+    public static void ConstrainNavMesh()
+    {
+        List<GameObject> gos = getMeshConstrainingUnits();
+        List<CircleMcCollider> circles = new List<CircleMcCollider>();
+        foreach(GameObject go in gos)
+        {
+            CircleMcCollider[] circleCols = go.GetComponentsInChildren<CircleMcCollider>();
+            circles.AddRange(circleCols);
+        }
+        NavMesh.Repath(circles);
     }
 
     public System.UInt64 IntPow(System.UInt64 theBase, System.UInt64 power)

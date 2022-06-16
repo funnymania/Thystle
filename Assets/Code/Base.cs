@@ -6,9 +6,9 @@ public class Base : Unit
 {
     public Vector3 spawnOffset = Vector3.zero;
 
-    protected override void Start()
+    protected override void Awake()
     {
-        base.Start();
+        base.Awake();
         name = "Base";
         isMovable = false;
         spawnOffset = new Vector3(-3 * WorldValues.UNIT_SIZE, -2 * WorldValues.UNIT_SIZE, 0);

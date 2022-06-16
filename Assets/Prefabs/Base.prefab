@@ -48,13 +48,14 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   id: 0
   playerId: 0
-  isMovable: 0
-  defaultSpeed: 0
-  isMoving: 0
-  spawnOffset:
+  truePosition:
     x: 0
     y: 0
     z: 0
+  isMovable: 0
+  defaultSpeed: 0
+  isMoving: 0
+  spawnOffset: {x: 0, y: 0, z: 0}
 --- !u!212 &1766379153201786456
 SpriteRenderer:
   m_ObjectHideFlags: 0
@@ -164,4 +165,4 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   offset:
     begin: {x: 0, y: 0, z: 0}
-    radius: 1
+    radius: 3

@@ -15,24 +15,24 @@ public class WorldValues: MonoBehaviour
 
     private void OnValidate()
     {
-        if (MIN_SUPPORTED_BIT_RES > 48)
+        if (bitResolution > 48)
         {
             MIN_SUPPORTED_BIT_RES = bitResolution;
             Debug.Log("In order to attempt, we would have to " +
                 "\ndouble wrap within 2 gameobjects to scale from (this would give us 72-bit RANGE).");
         }
-        else if (MIN_SUPPORTED_BIT_RES > FLOAT_BIT_RES)
+        else if (bitResolution > FLOAT_BIT_RES)
         {
             Debug.Log("Scaling will occur to compensate. At numbers greater than 2^24bits expect deviation.");
             MIN_SUPPORTED_BIT_RES = bitResolution;
-            UNIT_SIZE = (int)Mathf.Pow(2, MIN_SUPPORTED_BIT_RES - FLOAT_BIT_RES);
+            UNIT_SIZE = (int)Mathf.Pow(2, MIN_SUPPORTED_BIT_RES - 16);
             transform.localScale = new Vector3(UNIT_SIZE, UNIT_SIZE, UNIT_SIZE);
         }
-        else if (MIN_SUPPORTED_BIT_RES >= 16)
+        else if (bitResolution >= 16)
         {
             MIN_SUPPORTED_BIT_RES = bitResolution;
             UNIT_SIZE = (int)Mathf.Pow(2, MIN_SUPPORTED_BIT_RES - 16);
-            transform.localScale = new Vector3(1, 1, 1);
+            transform.localScale = new Vector3(UNIT_SIZE, UNIT_SIZE, UNIT_SIZE);
         }
         else
         {

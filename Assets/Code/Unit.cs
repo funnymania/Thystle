@@ -4,13 +4,15 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class Unit : MonoBehaviour
+public class Unit : MonoBehaviour, IMover
 {
     [HideInInspector]
     public System.UInt32 id;
 
     [HideInInspector]
     public System.UInt32 playerId;
+
+    public Vector2 velocity { get; set; }
 
     // note: truePosition is the "correct" position of the Unit. In Unity, the bit resolution is 24-bit, in
     //       the form of floats. If we need higher resolution than that, which is very probably, truePosition will
@@ -30,7 +32,7 @@ public class Unit : MonoBehaviour
 
     public bool isMoving;
 
-    protected virtual void Start() { }
+    protected virtual void Awake() { }
 
     public (LineCollider[], CircleCollider[]) GetColliders()
     {

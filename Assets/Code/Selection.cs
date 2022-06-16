@@ -137,7 +137,15 @@ public class Selection : MonoBehaviour
 
                 // note: currently only supporting single player. whichever id a player has would be resolved
                 //       in netcode in multiplayer.
-                MovementCommand mc = new MovementCommand(
+                // note: compilation symbols are broken in Unity 2021.3 so just comment out to go back to
+                //       old style.
+                //MovementCommand mc = new MovementCommand(
+                //    cursorWorld,
+                //    unitIds[(int)leaderId], 
+                //    unitIds.ToArray(),
+                //    match.commander.nextId
+                //);
+                PathMoveCommand mc = new PathMoveCommand(
                     cursorWorld,
                     unitIds[(int)leaderId], 
                     unitIds.ToArray(),
@@ -159,7 +167,7 @@ public class Selection : MonoBehaviour
                 // bug: scale compensation not working.
                 SpawnCommand sc = new SpawnCommand(
                     aBase.truePosition.AddV3(aBase.spawnOffset),
-                    Match.allUnits["Brunei"],
+                    Match.allUnits["Peasant"],
                     0,
                     Match.nextUnitId
                 );
