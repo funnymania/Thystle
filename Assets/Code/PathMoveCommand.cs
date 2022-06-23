@@ -36,7 +36,7 @@ public class PathMoveCommand : ICommand
         //    path.RemoveAt(path.Count - 1);
         //}
 
-        path.Add(destination);
+        // path.Add(destination);
 
         pointInPath = 0;
     }

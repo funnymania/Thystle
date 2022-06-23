@@ -56,19 +56,20 @@ public class NavMesh
         neighbors = FindNeighbors(meshNav);
 
         // test: to see visuals.
-        startTri = 1;
-        endTri = meshNav.Count - 1;
+        //startTri = 1;
+        //endTri = meshNav.Count - 1;
 
         // todo: guarantee triangulation constraints are respected.
 
     }
 
     /// <summary>
-    /// Neighbors are joined by having at least vertex in common.
+    /// Get all neighbors for each triangle in triangleMesh. 
+    /// Neighors have exactly 2 vertices in common. (share an edge).
+    /// Result is according to index in triangleMesh.
     /// </summary>
     /// <param name="triangleMesh"></param>
     /// <returns></returns>
-    // perf: Neighbors are triangles which share a vertex. This could be bad for A*
     public static List<List<int>> FindNeighbors(List<Triangle> triangleMesh)
     {
         List<List<int>> neighbors = new List<List<int>>();
@@ -79,17 +80,25 @@ public class NavMesh
             {
                 if (i != j)
                 {
-                    if (triangleMesh[i].v1 == triangleMesh[j].v1
-                        || triangleMesh[i].v1 == triangleMesh[j].v2
-                        || triangleMesh[i].v1 == triangleMesh[j].v3
-                        || triangleMesh[i].v2 == triangleMesh[j].v1
-                        || triangleMesh[i].v2 == triangleMesh[j].v2
-                        || triangleMesh[i].v2 == triangleMesh[j].v3
-                        || triangleMesh[i].v3 == triangleMesh[j].v1
-                        || triangleMesh[i].v3 == triangleMesh[j].v2
-                        || triangleMesh[i].v3 == triangleMesh[j].v3)
+                    if (triangleMesh[i].ContainsVertex(triangleMesh[j].v1)
+                        && triangleMesh[i].ContainsVertex(triangleMesh[j].v2)) 
                     {
                         indexes.Add(j);
+                        continue;
+                    }
+
+                    if (triangleMesh[i].ContainsVertex(triangleMesh[j].v1)
+                        && triangleMesh[i].ContainsVertex(triangleMesh[j].v3)) 
+                    {
+                        indexes.Add(j);
+                        continue;
+                    }
+                    
+                    if (triangleMesh[i].ContainsVertex(triangleMesh[j].v2)
+                        && triangleMesh[i].ContainsVertex(triangleMesh[j].v3)) 
+                    {
+                        indexes.Add(j);
+                        continue;
                     }
                 }
             }
@@ -249,12 +258,235 @@ public class NavMesh
         //}
         shortPath.Add(meshNav[endTri]);
 
+        List<Edge> edges = GetPortals(shortPath);
+
         // todo: use the simple stupid funnel to get a path of Vector3.
-        List<Vector3> bfish =  StupidFunnel(shortPath, start, end);
+        //List<Vector3> bfish = StupidFunnel(shortPath, start, end);
+        List<Vector3> bfish = StupidFunnelPortals(edges, start, end);
 
         // testing: just return the triangle centers for now. 
         // return TriangleCenters(shortPath);
         return bfish;
+    }
+
+    public static List<Vector3> StupidFunnelPortals(List<Edge> portals, VectorFixed start, VectorFixed end)
+    {
+        List<Vector3> result = new List<Vector3>();
+        Vector3 apex = start.AsUnityTransform();
+        Vector3 v1 = portals[0].v1;
+        Vector3 v2 = portals[0].v2;
+
+        // note: we MUST have somewhere to go for both sides once we are at the final portal. We set this
+        //       to the destination.
+        Edge finish = new Edge();
+        finish.v1 = end.AsUnityTransform();
+        finish.v2 = end.AsUnityTransform();
+        portals.Add(finish);
+
+        // int i = 0;
+        int v1Index = 0;
+        int v2Index = 0;
+        int protection = 0;
+        Vector3 v1Current = Vector3.zero;
+        Vector3 v2Current = Vector3.zero;
+        // while (portals[portals.Count - 1].ContainsVertex(v1) == false || portals[portals.Count - 1].ContainsVertex(v2) == false)
+        for (int i = 1; i < portals.Count; i += 1)
+        {
+            protection += 1;
+
+            if (protection > 100) return new List<Vector3>();
+
+            // test v1.
+            Triangle v1Tri = new Triangle(apex, v1, portals[i].v1);
+            Triangle v1TriTest = new Triangle(apex, v2, portals[i].v1);
+
+            // Funnel is NOT getting bigger. It is either shrinking or left side is crossing right.
+            // If areas are of opposite sign, this means that the new point is "between" both.
+            float area = v1Tri.AreaTimesTwo();
+            float area2 = v1TriTest.AreaTimesTwo();
+            if (v1Tri.AreaTimesTwo() >= 0)
+            {
+                if (v1TriTest.AreaTimesTwo() < 0 || area == 0)
+                {
+                    v1 = portals[i].v1;
+                    v1Index = i;
+                }
+                else
+                {
+                    apex = v2;
+                    v1 = apex;
+                    v2 = apex;
+                    result.Add(apex);
+                    i = v2Index;
+                    continue;
+                }
+            }
+
+            // test v2.
+            Triangle v2Tri = new Triangle(apex, v2, portals[i].v2);
+            Triangle v2TriTest = new Triangle(apex, v1, portals[i].v2);
+            area = v2Tri.AreaTimesTwo();
+            area2 = v2TriTest.AreaTimesTwo();
+            if (v2Tri.AreaTimesTwo() <= 0)
+            {
+                if (v2TriTest.AreaTimesTwo() > 0 || area == 0)
+                {
+                    v2 = portals[i].v2;
+                    v2Index = i;
+                }
+                else
+                {
+                    apex = v1;
+                    v1 = apex;
+                    v2 = apex;
+                    result.Add(apex);
+                    i = v1Index;
+                    continue;
+                }
+            }
+            
+            //LineCollider line = new LineCollider();
+            //line.begin = VectorFixed.FromVector3(apex);
+            //line.end = VectorFixed.FromVector3(v2);
+
+            //LineCollider lineSelf = new LineCollider();
+            //lineSelf.begin = VectorFixed.FromVector3(apex);
+            //lineSelf.end = VectorFixed.FromVector3(v1);
+
+            //CircleCollider pointTest = new CircleCollider();
+            //pointTest.begin = VectorFixed.FromVector3(sharedVertices[i]);
+            //long testPoint = FFI.SideOfLine(line, pointTest);
+
+            //CircleCollider pointCurrent = new CircleCollider();
+            //pointCurrent.begin = VectorFixed.FromVector3(v1);
+            //long currentPoint = FFI.SideOfLine(line, pointCurrent);
+
+            //CircleCollider pointOther = new CircleCollider();
+            //pointOther.begin = VectorFixed.FromVector3(v2);
+            //long selfCurrentPoint = FFI.SideOfLine(lineSelf, pointOther);
+
+            //long selfTestCurrentPoint = FFI.SideOfLine(lineSelf, pointTest);
+
+        }
+
+        result.Add(end.AsUnityTransform());
+
+        return result;
+    }
+
+    public static List<Edge> GetPortals(List<Triangle> path)
+    {
+        List<Edge> portals = new List<Edge>();
+
+        // Get first portal.
+        (Vector3 dontUse, Vector3 one, Vector3 other) = VertexWithoutSharedTriangle(path, 0);
+        Edge first = new Edge();
+        first.v1 = one;
+        first.v2 = other;
+        portals.Add(first);
+
+        // For each vertex in path, get all neighbors of it.
+        Dictionary<Vector3, HashSet<Vector3>> neighbors = new Dictionary<Vector3, HashSet<Vector3>>();
+        foreach (Triangle tri in path)
+        {
+            if (neighbors.ContainsKey(tri.v1) == false)
+            {
+                HashSet<Vector3> vectors = new HashSet<Vector3>();
+                vectors.Add(tri.v2);
+                vectors.Add(tri.v3);
+                neighbors[tri.v1] = vectors;
+            }
+            else
+            {
+                neighbors[tri.v1].Add(tri.v2);
+                neighbors[tri.v1].Add(tri.v3);
+            }
+
+            if (neighbors.ContainsKey(tri.v2) == false)
+            {
+                HashSet<Vector3> vectors = new HashSet<Vector3>();
+                vectors.Add(tri.v1);
+                vectors.Add(tri.v3);
+                neighbors[tri.v2] = vectors;
+            }
+            else
+            {
+                neighbors[tri.v2].Add(tri.v1);
+                neighbors[tri.v2].Add(tri.v3);
+            }
+
+            if (neighbors.ContainsKey(tri.v3) == false)
+            {
+                HashSet<Vector3> vectors = new HashSet<Vector3>();
+                vectors.Add(tri.v1);
+                vectors.Add(tri.v2);
+                neighbors[tri.v3] = vectors;
+            }
+            else
+            {
+                neighbors[tri.v3].Add(tri.v1);
+                neighbors[tri.v3].Add(tri.v2);
+            }
+        }
+
+        // All visited nodes.
+        HashSet<Vector3> visited = new HashSet<Vector3>();
+        visited.Add(dontUse);
+        visited.Add(one);
+        visited.Add(other);
+
+        while (path[path.Count - 1].ContainsVertex(one) == false 
+            || path[path.Count - 1].ContainsVertex(other) == false
+        )
+        {
+            // Get visitedCount of each vertex.
+            int oneUnvisitedCount = 0;
+            Vector3 oneUnvisited = Vector3.zero;
+            foreach (Vector3 item in neighbors[one])
+            {
+                if (visited.Contains(item) == false)
+                {
+                    oneUnvisitedCount += 1;
+                    oneUnvisited = item;
+                }    
+            }
+
+            int otherUnvisitedCount = 0;
+            Vector3 otherUnvisited = Vector3.zero;
+            foreach (Vector3 item in neighbors[other])
+            {
+                if (visited.Contains(item) == false)
+                {
+                    otherUnvisitedCount += 1;
+                    otherUnvisited = item;
+                }
+            }
+
+            if (oneUnvisitedCount == 1)
+            {
+                visited.Add(oneUnvisited);
+                one = oneUnvisited;
+                Edge edge = new Edge();
+                edge.v1 = one;
+                edge.v2 = other;
+                portals.Add(edge);
+            }
+            else if (otherUnvisitedCount == 1)
+            {
+                visited.Add(otherUnvisited);
+                other = otherUnvisited;
+                Edge edge = new Edge();
+                edge.v1 = one;
+                edge.v2 = other;
+                portals.Add(edge);
+            }
+            else
+            {
+                throw new System.Exception("Should not be happening.");
+            }
+        }
+
+        return portals;
     }
 
     public static List<Vector3> TriangleCenters(List<Triangle> triangles)
@@ -396,7 +628,7 @@ public class NavMesh
             path.Insert(0, meshNav[current]);
 
             // test: avoid unity crashes.
-            if (path.Count > 1000) return path;
+            //if (path.Count > 1000) return path;
         }
 
         return path;
@@ -447,7 +679,7 @@ public class NavMesh
         }
 
         if (isOne) return (triangles[index].v1, triangles[index].v2, triangles[index].v3);
-        if (isTwo) return (triangles[index].v2, triangles[index].v1, triangles[index].v3);
+        if (isTwo) return (triangles[index].v2, triangles[index].v3, triangles[index].v1);
         if (isThree) return (triangles[index].v3, triangles[index].v1, triangles[index].v2);
 
         throw new System.Exception("Chosen triangle must have a neighbor.");
@@ -666,8 +898,6 @@ public class NavMesh
             bool otherSmaller = false;
             bool otherCrosses = false;
 
-            // bug: it is running forever! we need to change the concept of 'neighbors' to be 
-            //      that of triangles which share TWO vertices, not one.
             if (protection > 1000)
             {
                 return new List<Vector3>();
@@ -737,7 +967,7 @@ public class NavMesh
                     {
                         oneCrosses = true;
                         apexTentative = other;
-                        otherTentative = MostClockwiseNeighbor(
+                        otherTentative = MostCounterClockwiseNeighbor(
                             apexTentative, 
                             sharedVerticesOther
                         );
@@ -752,7 +982,8 @@ public class NavMesh
                 apex = apexTentative;
                 one = oneTentative;
                 other = otherTentative;
-                vectorPath.Add(apex);
+                // if (path[path.Count - 1].ContainsVertex(apex) == false)
+                    vectorPath.Add(apex);
                 continue;
             }
 
@@ -801,7 +1032,7 @@ public class NavMesh
                     {
                         otherCrosses = true;
                         apexTentative = one;
-                        oneTentative = MostCounterClockwiseNeighbor(
+                        oneTentative = MostClockwiseNeighbor(
                             apexTentative, 
                             sharedVertices
                         );
@@ -816,7 +1047,8 @@ public class NavMesh
                 apex = apexTentative;
                 other = otherTentative;
                 one = oneTentative;
-                vectorPath.Add(apex);
+                // if (path[path.Count - 1].ContainsVertex(apex) == false)
+                    vectorPath.Add(apex);
                 continue;
             }
         }

@@ -49,6 +49,7 @@ public class Triangle
     /// https://en.wikipedia.org/wiki/Triangle#Using_coordinates
     /// We are not using the absolute value, as the negative value of the area is valuable for 
     /// determining the orientation of the triangle.
+    /// Clockwise triangles have negative areas. CounterClockwise have positive.
     /// </summary>
     /// <returns></returns>
     // bug: float, if Triangle contains non-integer vector3s we are in trouble
@@ -56,6 +57,9 @@ public class Triangle
     {
         Vector3 BA = v2 - v1;
         Vector3 CA = v3 - v1;
+
+        float lhs = BA.x * CA.y;
+        float rhs = CA.x * BA.y;
 
         return (BA.x * CA.y) - (CA.x * BA.y);
     }
