@@ -117,10 +117,12 @@ public class Match : MonoBehaviour
         for (System.UInt64 i = 0; i < (System.UInt64)playerInfo.Length - 1; i++)
         {
             playerInfo[i].tangos = 1610;
+
+            // todo: VectorFixed should be resolving FLEXIBLY withh MIN_SUPPORTED_BITS.
             SpawnCommand sc = new SpawnCommand(
                 new VectorFixed(
-                    IntPow(2, (ulong)WorldValues.MIN_SUPPORTED_BIT_RES - 12 + i), 
-                    IntPow(2, (ulong)WorldValues.MIN_SUPPORTED_BIT_RES - 12 + i), 
+                    Maths.IntPow(2, (ulong)WorldValues.MIN_SUPPORTED_BIT_RES - 1 + i), 
+                    Maths.IntPow(2, (ulong)WorldValues.MIN_SUPPORTED_BIT_RES - 1 + i), 
                     0
                 ),
                 allUnits["Base"],
@@ -142,8 +144,8 @@ public class Match : MonoBehaviour
         NavMesh.Repath(circles);
 
         VectorFixed camPos = new VectorFixed(
-            IntPow(2, (ulong)WorldValues.MIN_SUPPORTED_BIT_RES - 12), 
-            IntPow(2, (ulong)WorldValues.MIN_SUPPORTED_BIT_RES - 12), 
+            Maths.IntPow(2, (ulong)WorldValues.MIN_SUPPORTED_BIT_RES - 1), 
+            Maths.IntPow(2, (ulong)WorldValues.MIN_SUPPORTED_BIT_RES - 1), 
             0
         );
         Vector3 unityPos = camPos.AsUnityTransform();
@@ -172,18 +174,6 @@ public class Match : MonoBehaviour
             circles.AddRange(circleCols);
         }
         NavMesh.Repath(circles);
-    }
-
-    public System.UInt64 IntPow(System.UInt64 theBase, System.UInt64 power)
-    {
-        System.UInt64 result = 1;
-        while (power > 0)
-        {
-            result *= theBase;
-            power -= 1;
-        }
-
-        return result;
     }
 
     public bool Stop()

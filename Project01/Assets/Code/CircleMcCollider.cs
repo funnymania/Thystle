@@ -29,7 +29,7 @@ public class CircleMcCollider: MonoBehaviour
         //       positional offset), the adjustment of where this collider goes will be lossy.
         //       This is because we need to preserve integers, and so will round floats down.
         _circle.begin = VectorFixed.FromVector3(
-            transform.parent.position + (offset.begin * transform.parent.localScale.x)
+            transform.parent.position + (offset.begin * transform.parent.localScale.x * WorldValues.UNIT_SIZE)
         );
         _circle.radius = offset.radius * (ulong)transform.parent.localScale.x;
         _circleAliased = generateAliasedCircle();

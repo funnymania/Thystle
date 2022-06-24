@@ -23,16 +23,12 @@ public class NavMesh
     {
         List<Vector3> spacePoints = new List<Vector3>();
 
-        // note: testing values are very small.
-        //       replace this for the game with actual bounds values for the map.
-        //spacePoints.Add(new Vector3(0, 0, 0));
-        //spacePoints.Add(new Vector3(0, Mathf.Pow(2, WorldValues.MIN_SUPPORTED_BIT_RES), 0));
-        //spacePoints.Add(new Vector3(Mathf.Pow(2, WorldValues.MIN_SUPPORTED_BIT_RES), Mathf.Pow(2, WorldValues.MIN_SUPPORTED_BIT_RES), 0));
-        //spacePoints.Add(new Vector3(Mathf.Pow(2, WorldValues.MIN_SUPPORTED_BIT_RES), 0, 0));
+        // note: this is the "map".
         spacePoints.Add(new Vector3(0, 0, 0));
-        spacePoints.Add(new Vector3(0, Mathf.Pow(2, WorldValues.MIN_SUPPORTED_BIT_RES - 10), 0));
-        spacePoints.Add(new Vector3(Mathf.Pow(2, WorldValues.MIN_SUPPORTED_BIT_RES - 10), Mathf.Pow(2, WorldValues.MIN_SUPPORTED_BIT_RES - 10), 0));
-        spacePoints.Add(new Vector3(Mathf.Pow(2, WorldValues.MIN_SUPPORTED_BIT_RES - 10), 0, 0));
+        spacePoints.Add(new Vector3(0, Maths.IntPow(2, (ulong)WorldValues.MIN_SUPPORTED_BIT_RES), 0));
+        spacePoints.Add(new Vector3(Maths.IntPow(2, (ulong)WorldValues.MIN_SUPPORTED_BIT_RES), 
+            Maths.IntPow(2, (ulong)WorldValues.MIN_SUPPORTED_BIT_RES), 0));
+        spacePoints.Add(new Vector3(Maths.IntPow(2, (ulong)WorldValues.MIN_SUPPORTED_BIT_RES), 0, 0));
 
         // Add vertices of anything that must be pathed around (bases, walls, etc)
         // CircleMcCollider[] circles = GetComponentsInChildren<CircleMcCollider>();
@@ -56,19 +52,20 @@ public class NavMesh
         neighbors = FindNeighbors(meshNav);
 
         // test: to see visuals.
-        startTri = 1;
-        endTri = meshNav.Count - 1;
+        //startTri = 1;
+        //endTri = meshNav.Count - 1;
 
         // todo: guarantee triangulation constraints are respected.
 
     }
 
     /// <summary>
-    /// Neighbors are joined by having at least vertex in common.
+    /// Get all neighbors for each triangle in triangleMesh. 
+    /// Neighors have exactly 2 vertices in common. (share an edge).
+    /// Result is according to index in triangleMesh.
     /// </summary>
     /// <param name="triangleMesh"></param>
     /// <returns></returns>
-    // perf: Neighbors are triangles which share a vertex. This could be bad for A*
     public static List<List<int>> FindNeighbors(List<Triangle> triangleMesh)
     {
         List<List<int>> neighbors = new List<List<int>>();
@@ -79,17 +76,25 @@ public class NavMesh
             {
                 if (i != j)
                 {
-                    if (triangleMesh[i].v1 == triangleMesh[j].v1
-                        || triangleMesh[i].v1 == triangleMesh[j].v2
-                        || triangleMesh[i].v1 == triangleMesh[j].v3
-                        || triangleMesh[i].v2 == triangleMesh[j].v1
-                        || triangleMesh[i].v2 == triangleMesh[j].v2
-                        || triangleMesh[i].v2 == triangleMesh[j].v3
-                        || triangleMesh[i].v3 == triangleMesh[j].v1
-                        || triangleMesh[i].v3 == triangleMesh[j].v2
-                        || triangleMesh[i].v3 == triangleMesh[j].v3)
+                    if (triangleMesh[i].ContainsVertex(triangleMesh[j].v1)
+                        && triangleMesh[i].ContainsVertex(triangleMesh[j].v2)) 
                     {
                         indexes.Add(j);
+                        continue;
+                    }
+
+                    if (triangleMesh[i].ContainsVertex(triangleMesh[j].v1)
+                        && triangleMesh[i].ContainsVertex(triangleMesh[j].v3)) 
+                    {
+                        indexes.Add(j);
+                        continue;
+                    }
+                    
+                    if (triangleMesh[i].ContainsVertex(triangleMesh[j].v2)
+                        && triangleMesh[i].ContainsVertex(triangleMesh[j].v3)) 
+                    {
+                        indexes.Add(j);
+                        continue;
                     }
                 }
             }
@@ -235,7 +240,7 @@ public class NavMesh
         if (startTri == -1 || endTri == -1)
         {
             Debug.Log("User cannot move to occupied space, or a space off the map.");
-            // throw new System.Exception("Destination, or maybe even start triangle, not found.");
+            return new List<Vector3>();
         }
 
         // A* through the list of triangles to find the shortest path of triangles
@@ -249,11 +254,235 @@ public class NavMesh
         //}
         shortPath.Add(meshNav[endTri]);
 
+        List<Edge> edges = GetPortals(shortPath);
+
         // todo: use the simple stupid funnel to get a path of Vector3.
-        List<Vector3> bfish =  StupidFunnel(shortPath, start, end);
+        //List<Vector3> bfish = StupidFunnel(shortPath, start, end);
+        List<Vector3> bfish = StupidFunnelPortals(edges, start, end);
 
         // testing: just return the triangle centers for now. 
-        return TriangleCenters(shortPath);
+        // return TriangleCenters(shortPath);
+        return bfish;
+    }
+
+    public static List<Vector3> StupidFunnelPortals(List<Edge> portals, VectorFixed start, VectorFixed end)
+    {
+        List<Vector3> result = new List<Vector3>();
+        Vector3 apex = start.AsUnityTransform();
+        Vector3 v1 = portals[0].v1;
+        Vector3 v2 = portals[0].v2;
+
+        // note: we MUST have somewhere to go for both sides once we are at the final portal. We set this
+        //       to the destination.
+        Edge finish = new Edge();
+        finish.v1 = end.AsUnityTransform();
+        finish.v2 = end.AsUnityTransform();
+        portals.Add(finish);
+
+        // int i = 0;
+        int v1Index = 0;
+        int v2Index = 0;
+        int protection = 0;
+        Vector3 v1Current = Vector3.zero;
+        Vector3 v2Current = Vector3.zero;
+        // while (portals[portals.Count - 1].ContainsVertex(v1) == false || portals[portals.Count - 1].ContainsVertex(v2) == false)
+        for (int i = 1; i < portals.Count; i += 1)
+        {
+            protection += 1;
+
+            if (protection > 100) return new List<Vector3>();
+
+            // test v1.
+            Triangle v1Tri = new Triangle(apex, v1, portals[i].v1);
+            Triangle v1TriTest = new Triangle(apex, v2, portals[i].v1);
+
+            // Funnel is NOT getting bigger. It is either shrinking or left side is crossing right.
+            // If areas are of opposite sign, this means that the new point is "between" both.
+            float area = v1Tri.AreaTimesTwo();
+            float area2 = v1TriTest.AreaTimesTwo();
+            if (v1Tri.AreaTimesTwo() >= 0)
+            {
+                if (v1TriTest.AreaTimesTwo() < 0 || area == 0)
+                {
+                    v1 = portals[i].v1;
+                    v1Index = i;
+                }
+                else
+                {
+                    apex = v2;
+                    v1 = apex;
+                    v2 = apex;
+                    result.Add(apex);
+                    i = v2Index;
+                    continue;
+                }
+            }
+
+            // test v2.
+            Triangle v2Tri = new Triangle(apex, v2, portals[i].v2);
+            Triangle v2TriTest = new Triangle(apex, v1, portals[i].v2);
+            area = v2Tri.AreaTimesTwo();
+            area2 = v2TriTest.AreaTimesTwo();
+            if (v2Tri.AreaTimesTwo() <= 0)
+            {
+                if (v2TriTest.AreaTimesTwo() > 0 || area == 0)
+                {
+                    v2 = portals[i].v2;
+                    v2Index = i;
+                }
+                else
+                {
+                    apex = v1;
+                    v1 = apex;
+                    v2 = apex;
+                    result.Add(apex);
+                    i = v1Index;
+                    continue;
+                }
+            }
+            
+            //LineCollider line = new LineCollider();
+            //line.begin = VectorFixed.FromVector3(apex);
+            //line.end = VectorFixed.FromVector3(v2);
+
+            //LineCollider lineSelf = new LineCollider();
+            //lineSelf.begin = VectorFixed.FromVector3(apex);
+            //lineSelf.end = VectorFixed.FromVector3(v1);
+
+            //CircleCollider pointTest = new CircleCollider();
+            //pointTest.begin = VectorFixed.FromVector3(sharedVertices[i]);
+            //long testPoint = FFI.SideOfLine(line, pointTest);
+
+            //CircleCollider pointCurrent = new CircleCollider();
+            //pointCurrent.begin = VectorFixed.FromVector3(v1);
+            //long currentPoint = FFI.SideOfLine(line, pointCurrent);
+
+            //CircleCollider pointOther = new CircleCollider();
+            //pointOther.begin = VectorFixed.FromVector3(v2);
+            //long selfCurrentPoint = FFI.SideOfLine(lineSelf, pointOther);
+
+            //long selfTestCurrentPoint = FFI.SideOfLine(lineSelf, pointTest);
+
+        }
+
+        result.Add(end.AsUnityTransform());
+
+        return result;
+    }
+
+    public static List<Edge> GetPortals(List<Triangle> path)
+    {
+        List<Edge> portals = new List<Edge>();
+
+        // Get first portal.
+        (Vector3 dontUse, Vector3 one, Vector3 other) = VertexWithoutSharedTriangle(path, 0);
+        Edge first = new Edge();
+        first.v1 = one;
+        first.v2 = other;
+        portals.Add(first);
+
+        // For each vertex in path, get all neighbors of it.
+        Dictionary<Vector3, HashSet<Vector3>> neighbors = new Dictionary<Vector3, HashSet<Vector3>>();
+        foreach (Triangle tri in path)
+        {
+            if (neighbors.ContainsKey(tri.v1) == false)
+            {
+                HashSet<Vector3> vectors = new HashSet<Vector3>();
+                vectors.Add(tri.v2);
+                vectors.Add(tri.v3);
+                neighbors[tri.v1] = vectors;
+            }
+            else
+            {
+                neighbors[tri.v1].Add(tri.v2);
+                neighbors[tri.v1].Add(tri.v3);
+            }
+
+            if (neighbors.ContainsKey(tri.v2) == false)
+            {
+                HashSet<Vector3> vectors = new HashSet<Vector3>();
+                vectors.Add(tri.v1);
+                vectors.Add(tri.v3);
+                neighbors[tri.v2] = vectors;
+            }
+            else
+            {
+                neighbors[tri.v2].Add(tri.v1);
+                neighbors[tri.v2].Add(tri.v3);
+            }
+
+            if (neighbors.ContainsKey(tri.v3) == false)
+            {
+                HashSet<Vector3> vectors = new HashSet<Vector3>();
+                vectors.Add(tri.v1);
+                vectors.Add(tri.v2);
+                neighbors[tri.v3] = vectors;
+            }
+            else
+            {
+                neighbors[tri.v3].Add(tri.v1);
+                neighbors[tri.v3].Add(tri.v2);
+            }
+        }
+
+        // All visited nodes.
+        HashSet<Vector3> visited = new HashSet<Vector3>();
+        visited.Add(dontUse);
+        visited.Add(one);
+        visited.Add(other);
+
+        while (path[path.Count - 1].ContainsVertex(one) == false 
+            || path[path.Count - 1].ContainsVertex(other) == false
+        )
+        {
+            // Get visitedCount of each vertex.
+            int oneUnvisitedCount = 0;
+            Vector3 oneUnvisited = Vector3.zero;
+            foreach (Vector3 item in neighbors[one])
+            {
+                if (visited.Contains(item) == false)
+                {
+                    oneUnvisitedCount += 1;
+                    oneUnvisited = item;
+                }    
+            }
+
+            int otherUnvisitedCount = 0;
+            Vector3 otherUnvisited = Vector3.zero;
+            foreach (Vector3 item in neighbors[other])
+            {
+                if (visited.Contains(item) == false)
+                {
+                    otherUnvisitedCount += 1;
+                    otherUnvisited = item;
+                }
+            }
+
+            if (oneUnvisitedCount == 1)
+            {
+                visited.Add(oneUnvisited);
+                one = oneUnvisited;
+                Edge edge = new Edge();
+                edge.v1 = one;
+                edge.v2 = other;
+                portals.Add(edge);
+            }
+            else if (otherUnvisitedCount == 1)
+            {
+                visited.Add(otherUnvisited);
+                other = otherUnvisited;
+                Edge edge = new Edge();
+                edge.v1 = one;
+                edge.v2 = other;
+                portals.Add(edge);
+            }
+            else
+            {
+                throw new System.Exception("Should not be happening.");
+            }
+        }
+
+        return portals;
     }
 
     public static List<Vector3> TriangleCenters(List<Triangle> triangles)
@@ -395,7 +624,7 @@ public class NavMesh
             path.Insert(0, meshNav[current]);
 
             // test: avoid unity crashes.
-            if (path.Count > 1000) return path;
+            //if (path.Count > 1000) return path;
         }
 
         return path;
@@ -446,7 +675,7 @@ public class NavMesh
         }
 
         if (isOne) return (triangles[index].v1, triangles[index].v2, triangles[index].v3);
-        if (isTwo) return (triangles[index].v2, triangles[index].v1, triangles[index].v3);
+        if (isTwo) return (triangles[index].v2, triangles[index].v3, triangles[index].v1);
         if (isThree) return (triangles[index].v3, triangles[index].v1, triangles[index].v2);
 
         throw new System.Exception("Chosen triangle must have a neighbor.");
@@ -480,31 +709,160 @@ public class NavMesh
     //    }
     //}
 
-    // perf: will generate duplicate vertices in results.
     public static List<Vector3> VerticesSharingAnEdge(Vector3 focus, List<Triangle> amongst)
     {
         List<Vector3> verts = new List<Vector3>();
+
         // for every triangle that has focus in it, return all other vertices.
         foreach(Triangle tri in amongst)
         {
             if (tri.v1 == focus)
             {
-                verts.Add(tri.v2);
-                verts.Add(tri.v3);
+                if (verts.Contains(tri.v2) == false)
+                {
+                    verts.Add(tri.v2); 
+                }
+                
+                if (verts.Contains(tri.v3) == false)
+                {
+                    verts.Add(tri.v3);
+                }
             }
             else if (tri.v2 == focus)
             {
-                verts.Add(tri.v1);
-                verts.Add(tri.v3);
+                if (verts.Contains(tri.v1) == false)
+                {
+                    verts.Add(tri.v1); 
+                }
+
+                if (verts.Contains(tri.v3) == false)
+                {
+                    verts.Add(tri.v3); 
+                }
             }
             else if (tri.v3 == focus)
             {
-                verts.Add(tri.v1);
-                verts.Add(tri.v2);
+                if (verts.Contains(tri.v1) == false)
+                {
+                    verts.Add(tri.v1); 
+                }
+                if (verts.Contains(tri.v2) == false)
+                {
+                    verts.Add(tri.v2); 
+                }
             }
         }
 
         return verts;
+    }
+
+    /// <summary>
+    /// Finds neighbor most clockwise of some Vector3.
+    /// </summary>
+    /// <param name="focus"></param>
+    /// <param name="neighbors"></param>
+    /// <returns></returns>
+    public static Vector3 MostClockwiseNeighbor(Vector3 focus, List<Vector3> neighbors)
+    {
+        int mostClockwiseIndex = 0;
+        LineCollider mostClockwise = new LineCollider();
+        mostClockwise.begin = VectorFixed.FromVector3(neighbors[0]);
+        mostClockwise.end = VectorFixed.FromVector3(focus);
+
+        /// go through the list of all neighbors. get neighbors[i] - focus.
+        /// if the next neighbor is to the RIGHT of this, then record this
+        /// value as the most clockwise.
+        for (int i = 1; i < neighbors.Count; i++)
+        {
+            CircleCollider contender = new CircleCollider();
+            contender.begin = VectorFixed.FromVector3(neighbors[i]);
+            if (FFI.SideOfLine(mostClockwise, contender) < 0)
+            {
+                mostClockwise.begin = VectorFixed.FromVector3(neighbors[i]);
+                mostClockwiseIndex = i;
+            }
+        }
+
+        return neighbors[mostClockwiseIndex];
+    }
+
+    /// <summary>
+    /// Finds neighbor most counter-clockwise of some Vector3.
+    /// </summary>
+    /// <param name="focus"></param>
+    /// <param name="neighbors"></param>
+    /// <returns></returns>
+    public static Vector3 MostCounterClockwiseNeighbor(Vector3 focus, List<Vector3> neighbors)
+    {
+        int mostClockwiseIndex = 0;
+        LineCollider mostClockwise = new LineCollider();
+        mostClockwise.begin = VectorFixed.FromVector3(neighbors[0]);
+        mostClockwise.end = VectorFixed.FromVector3(focus);
+
+        /// go through the list of all neighbors. get neighbors[i] - focus.
+        /// if the next neighbor is to the RIGHT of this, then record this
+        /// value as the most clockwise.
+        for (int i = 1; i < neighbors.Count; i++)
+        {
+            CircleCollider contender = new CircleCollider();
+            contender.begin = VectorFixed.FromVector3(neighbors[i]);
+            if (FFI.SideOfLine(mostClockwise, contender) > 0)
+            {
+                mostClockwise.begin = VectorFixed.FromVector3(neighbors[i]);
+                mostClockwiseIndex = i;
+            }
+        }
+
+        return neighbors[mostClockwiseIndex];
+    }
+
+    /// <summary>
+    /// Returns first matching triangle's other vertex. Assumes path contains valid triangles, and a triangle
+    /// which contains the two points actually exists.
+    /// </summary>
+    /// <param name="path"></param>
+    /// <param name="one"></param>
+    /// <param name="other"></param>
+    public static Vector3 FindOtherVertexOfTriangleContainingTwoVertices(List<Triangle> path, Vector3 one, Vector3 other)
+    {
+        foreach(Triangle tri in path)
+        {
+            if (tri.v1 == one)
+            {
+                if (tri.v2 == other)
+                {
+                    return tri.v3;
+                }
+                else if (tri.v3 == other)
+                {
+                    return tri.v2;
+                }
+            }
+            else if (tri.v2 == one)
+            {
+                if (tri.v1 == other)
+                {
+                    return tri.v3;
+                }
+                else if (tri.v3 == other)
+                {
+                    return tri.v2;
+                }
+            }
+            else if (tri.v3 == one)
+            {
+                if (tri.v1 == other)
+                {
+                    return tri.v2;
+                }
+                else if (tri.v2 == other)
+                {
+                    return tri.v1;
+                }
+            }
+        }
+
+        throw new System.Exception("No triangle found");
     }
 
     public static List<Vector3> StupidFunnel(List<Triangle> path, VectorFixed start, VectorFixed end)
@@ -524,19 +882,36 @@ public class NavMesh
 
         int protection = 0;
 
-        while (true) 
+        // while apex is NOT in final triangle.
+        while (path[path.Count - 1].ContainsVertex(apex) == false)
         {
             protection += 1;
-            bool oneStuck = true;
-            bool otherStuck = true;
+            Vector3 apexTentative = Vector3.zero;
+            Vector3 oneTentative = Vector3.zero;
+            Vector3 otherTentative = Vector3.zero;
+            bool oneSmaller = false;
+            bool oneCrosses = false;
+            bool otherSmaller = false;
+            bool otherCrosses = false;
 
             if (protection > 1000)
             {
                 return new List<Vector3>();
             }
 
-            // get list of vertices which share an edge with one.
+            // get list of vertices which share an edge with one. remove vertices which 
+            // will send us "backwards"
             List<Vector3> sharedVertices = VerticesSharingAnEdge(one, path);
+            sharedVertices.Remove(dontUse);
+            sharedVertices.Remove(currentTriangle.v1);
+            sharedVertices.Remove(currentTriangle.v2);
+            sharedVertices.Remove(currentTriangle.v3);
+
+            List<Vector3> sharedVerticesOther = VerticesSharingAnEdge(other, path);
+            sharedVerticesOther.Remove(dontUse);
+            sharedVerticesOther.Remove(currentTriangle.v1);
+            sharedVerticesOther.Remove(currentTriangle.v2);
+            sharedVerticesOther.Remove(currentTriangle.v3);
 
             // from list of vertices which one or other shares a path with, test each one.
             for (int i = 0; i < sharedVertices.Count; i++)
@@ -546,137 +921,163 @@ public class NavMesh
 
                 LineCollider line = new LineCollider();
                 line.begin = VectorFixed.FromVector3(apex);
-                line.end = VectorFixed.FromVector3(one);
-                CircleCollider pointTest = new CircleCollider();
-                pointTest.begin = VectorFixed.FromVector3(sharedVertices[i]);
-                long testPoint = FFI.SideOfLine(line, pointTest);
-
-                CircleCollider pointCurrent = new CircleCollider();
-                pointCurrent.begin = VectorFixed.FromVector3(other);
-                long currentPoint = FFI.SideOfLine(line, pointCurrent);
-                if (areaTest == 0)
-                {
-                    // not a triangle.
-                }
-                // todo: first conditional here should be a test of whether point is between currentTriangle
-                //       v2 - v1 and v3 - v1.
-                else if (Mathf.Sign(testPoint) == Mathf.Sign(currentPoint) && Mathf.Sign(areaTest) == Mathf.Sign(currentArea))
-                {
-                    oneStuck = false;
-                    one = sharedVertices[i];
-                    currentTriangle = new Triangle(apex, one, other);
-                    currentArea = currentTriangle.AreaTimesTwo();
-                }
-            } 
-
-            if (oneStuck == false)
-            {
-                continue;
-            }
-
-            // get list of vertices which share an edge with one.
-            sharedVertices = VerticesSharingAnEdge(other, path);
-
-            // from list of vertices which one or other shares a path with, test each one.
-            for (int i = 0; i < sharedVertices.Count; i++)
-            {
-                Triangle test = new Triangle(apex, one, sharedVertices[i]);
-                float areaTest = test.AreaTimesTwo();
-
-                LineCollider line = new LineCollider();
-                line.begin = VectorFixed.FromVector3(apex);
                 line.end = VectorFixed.FromVector3(other);
+
+                LineCollider lineSelf = new LineCollider();
+                lineSelf.begin = VectorFixed.FromVector3(apex);
+                lineSelf.end = VectorFixed.FromVector3(one);
+
                 CircleCollider pointTest = new CircleCollider();
                 pointTest.begin = VectorFixed.FromVector3(sharedVertices[i]);
-
-                // bug: this is marking 0 (colinear) where it is not.
                 long testPoint = FFI.SideOfLine(line, pointTest);
 
                 CircleCollider pointCurrent = new CircleCollider();
                 pointCurrent.begin = VectorFixed.FromVector3(one);
                 long currentPoint = FFI.SideOfLine(line, pointCurrent);
+
+                CircleCollider pointOther = new CircleCollider();
+                pointOther.begin = VectorFixed.FromVector3(other);
+                long selfCurrentPoint = FFI.SideOfLine(lineSelf, pointOther);
+
+                long selfTestCurrentPoint = FFI.SideOfLine(lineSelf, pointTest);
+
                 if (areaTest == 0)
                 {
                     // not a triangle.
                 }
-                else if (Mathf.Sign(testPoint) == Mathf.Sign(currentPoint) && Mathf.Sign(areaTest) == Mathf.Sign(currentArea))
+                // this tests whether next is beyond one's line or not. if not, then the point
+                // would make the funnel bigger.
+                else if (Mathf.Sign(selfCurrentPoint) == Mathf.Sign(selfTestCurrentPoint))
                 {
-                    otherStuck = false;
-                    other = sharedVertices[i];
-                    currentTriangle = new Triangle(apex, one, other);
-                    currentArea = currentTriangle.AreaTimesTwo();
+                    // This means that the point is WITHIN the funnel. 
+                    if (Mathf.Sign(testPoint) == Mathf.Sign(currentPoint))
+                    {
+                        oneSmaller = true;
+                        one = sharedVertices[i];
+                        currentTriangle = new Triangle(apex, one, other);
+                        currentArea = currentTriangle.AreaTimesTwo();
+                        break;
+                    }
+                    // neighbor crosses over.
+                    else
+                    {
+                        oneCrosses = true;
+                        apexTentative = other;
+                        otherTentative = MostCounterClockwiseNeighbor(
+                            apexTentative, 
+                            sharedVerticesOther
+                        );
+                        // get the only triangle which contains apex and new Other.
+                        oneTentative = FindOtherVertexOfTriangleContainingTwoVertices(path, apexTentative, otherTentative);
+                    }
+                }
+            }
+
+            if (oneSmaller == false && oneCrosses == true)
+            {
+                apex = apexTentative;
+                one = oneTentative;
+                other = otherTentative;
+                // if (path[path.Count - 1].ContainsVertex(apex) == false)
+                    vectorPath.Add(apex);
+                continue;
+            }
+
+            // from list of vertices which one or other shares a path with, test each one.
+            for (int i = 0; i < sharedVerticesOther.Count; i++)
+            {
+                Triangle test = new Triangle(apex, one, sharedVerticesOther[i]);
+                float areaTest = test.AreaTimesTwo();
+
+                LineCollider line = new LineCollider();
+                line.begin = VectorFixed.FromVector3(apex);
+                line.end = VectorFixed.FromVector3(one);
+
+                LineCollider lineSelf = new LineCollider();
+                lineSelf.begin = VectorFixed.FromVector3(apex);
+                lineSelf.end = VectorFixed.FromVector3(other);
+
+                CircleCollider pointTest = new CircleCollider();
+                pointTest.begin = VectorFixed.FromVector3(sharedVerticesOther[i]);
+                long testPoint = FFI.SideOfLine(line, pointTest);
+
+                CircleCollider pointCurrent = new CircleCollider();
+                pointCurrent.begin = VectorFixed.FromVector3(other);
+                long currentPoint = FFI.SideOfLine(line, pointCurrent);
+
+                CircleCollider pointOne = new CircleCollider();
+                pointOne.begin = VectorFixed.FromVector3(one);
+                long selfCurrentPoint = FFI.SideOfLine(lineSelf, pointOne);
+
+                long selfTestCurrentPoint = FFI.SideOfLine(lineSelf, pointTest);
+                if (areaTest == 0)
+                {
+                    // not a triangle.
+                }
+                else if (Mathf.Sign(selfCurrentPoint) == Mathf.Sign(selfTestCurrentPoint))
+                {
+                    if (Mathf.Sign(testPoint) == Mathf.Sign(currentPoint))
+                    {
+                        otherSmaller = true;
+                        other = sharedVerticesOther[i];
+                        currentTriangle = new Triangle(apex, one, other);
+                        currentArea = currentTriangle.AreaTimesTwo();
+                        break;
+                    }
+                    else
+                    {
+                        otherCrosses = true;
+                        apexTentative = one;
+                        oneTentative = MostClockwiseNeighbor(
+                            apexTentative, 
+                            sharedVertices
+                        );
+                        // get the only triangle which contains apex and new Other.
+                        otherTentative = FindOtherVertexOfTriangleContainingTwoVertices(path, apexTentative, oneTentative);
+                    }
                 }
             } 
 
-            // if the area of the triangle between itself, its shared vertex, and the apex
-            // becomes larger, continue. If there is no point that makes the triangle smaller,
-            // move one to the point where the triangle area is zero or opposing, mark as stuck.
-
-            // if both are "stuck", the point of 'one' will be added to vectorPath, and this will be the
-            // new apex.
-            if (oneStuck && otherStuck)
+            if (otherSmaller == false && otherCrosses == true)
             {
-                vectorPath.Add(other);
-                // take 'one' as v2, and take the new 'other' as a neighbor of apex such
-                // that it is not ALSO a neighbor of 'one' AND is not in ANY triangle containing apex.
-                // in addition, we need a corner case for the initial triangle in the path, as
-                // this will need to not include "don't use"
-
-                // the point which is CROSSING can be the new v2. There are two triangles that apex and 
-                // this new v2 can be a part of. Pick the one whose orientation matches
-                // Triangle(apex, OTHER, point which would have gone over)
-                apex = other;
-                other = FindVertexNotInTriangleConnectedToAVertex(currentTriangle, one, apex, dontUse);
-                currentTriangle = new Triangle(apex, one, other);
-            }
-
-            if (path[path.Count - 1].ContainsVertex(apex))
-            {
-                vectorPath.Add(end.AsUnityTransform());
-                return vectorPath;
-            }
-
-            // Pick v1 point from first triangle.
-            // Vector3 basePoint = path[i].v1;
-
-            // Determine whether v2 or v3 are shared with next triangle.
-            // (Vector3 left, Vector3 right) = FindLeftAndRightVertices(basePoint, path[i], path[i + 1]);
-
-            // move on to next triangle, move left
-            // again, but move right
-
-            // cross product to determine whether new point is on opposite side of funnel.
-            // if so, add previous left/right to vectorPath, and restart with this left/right as base.
-            // continue;
-        }
-
-        throw new System.Exception("Funnel algorithm failed.");
-    }
-
-    public static Vector3 FindVertexNotInAnyTriangleConnectedToAVertex
-        (List<Triangle> triangles, Vector3 vertex, Vector3 focus, Vector3 otherVertex)
-    {
-
-        // get all neighbors of focus.
-        List<Vector3> neighbors = VerticesSharingAnEdge(focus, meshNav);
-
-        // get all neighbors of vertex
-        List<Vector3> vertexNeighbors = VerticesSharingAnEdge(vertex, meshNav);
-
-        // for each neighbor, return the first that is not a member of vertexNeighbors and also not
-        //       in triangle.
-        Vector3 result;
-        foreach (Vector3 neighbor in neighbors)
-        {
-            if (neighbor != vertex && triangle.ContainsVertex(neighbor) == false
-                && neighbor != otherVertex)
-            {
-                return neighbor;
+                apex = apexTentative;
+                other = otherTentative;
+                one = oneTentative;
+                // if (path[path.Count - 1].ContainsVertex(apex) == false)
+                    vectorPath.Add(apex);
+                continue;
             }
         }
 
-        throw new System.Exception("Somehow, there is no fitting neighbor.");
+        vectorPath.Add(end.AsUnityTransform());
+        return vectorPath;
+
+        // throw new System.Exception("Funnel algorithm failed.");
     }
+
+    //public static Vector3 FindVertexNotInAnyTriangleConnectedToAVertex
+    //    (List<Triangle> triangles, Vector3 vertex, Vector3 focus, Vector3 otherVertex)
+    //{
+    //    // get all neighbors of focus.
+    //    List<Vector3> neighbors = VerticesSharingAnEdge(focus, meshNav);
+
+    //    // get all neighbors of vertex
+    //    List<Vector3> vertexNeighbors = VerticesSharingAnEdge(vertex, meshNav);
+
+    //    // for each neighbor, return the first that is not a member of vertexNeighbors and also not
+    //    //       in triangle.
+    //    Vector3 result;
+    //    foreach (Vector3 neighbor in neighbors)
+    //    {
+    //        if (neighbor != vertex && triangle.ContainsVertex(neighbor) == false
+    //            && neighbor != otherVertex)
+    //        {
+    //            return neighbor;
+    //        }
+    //    }
+
+    //    throw new System.Exception("Somehow, there is no fitting neighbor.");
+    //}
 
     /// <summary>
     /// basePoint will be one of the vertices of current, but we don't know which.

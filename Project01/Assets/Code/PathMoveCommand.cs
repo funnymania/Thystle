@@ -19,6 +19,8 @@ public class PathMoveCommand : ICommand
         this.id = id;
 
         path = new List<VectorFixed>();
+
+        // note: entire path is returned here.
         List<Vector3> v3Path = NavMesh.ComputePath(
             Match.fieldedUnits[leaderId].GetComponent<Unit>().truePosition,
             destination
@@ -36,7 +38,7 @@ public class PathMoveCommand : ICommand
         //    path.RemoveAt(path.Count - 1);
         //}
 
-        path.Add(destination);
+        // path.Add(destination);
 
         pointInPath = 0;
     }

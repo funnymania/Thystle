@@ -110,6 +110,9 @@ public class Selection : MonoBehaviour
         }
         else if (Input.GetMouseButtonUp(1) && _selection.Length > 0) // Right click.
         {
+            // todo: we need to handle what happens when the user selects something invalid here.
+            //       moving to a space that cannot be moved to should have some special logic.
+
             // get all positions and members.
             List<VectorFixed> vectors = new List<VectorFixed>();
             List<uint> unitIds = new List<uint>();
