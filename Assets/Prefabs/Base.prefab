@@ -165,4 +165,4 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   offset:
     begin: {x: 0, y: 0, z: 0}
-    radius: 3
+    radius: 64

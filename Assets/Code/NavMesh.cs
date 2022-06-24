@@ -23,16 +23,12 @@ public class NavMesh
     {
         List<Vector3> spacePoints = new List<Vector3>();
 
-        // note: testing values are very small.
-        //       replace this for the game with actual bounds values for the map.
-        //spacePoints.Add(new Vector3(0, 0, 0));
-        //spacePoints.Add(new Vector3(0, Mathf.Pow(2, WorldValues.MIN_SUPPORTED_BIT_RES), 0));
-        //spacePoints.Add(new Vector3(Mathf.Pow(2, WorldValues.MIN_SUPPORTED_BIT_RES), Mathf.Pow(2, WorldValues.MIN_SUPPORTED_BIT_RES), 0));
-        //spacePoints.Add(new Vector3(Mathf.Pow(2, WorldValues.MIN_SUPPORTED_BIT_RES), 0, 0));
+        // note: this is the "map".
         spacePoints.Add(new Vector3(0, 0, 0));
-        spacePoints.Add(new Vector3(0, Mathf.Pow(2, WorldValues.MIN_SUPPORTED_BIT_RES - 10), 0));
-        spacePoints.Add(new Vector3(Mathf.Pow(2, WorldValues.MIN_SUPPORTED_BIT_RES - 10), Mathf.Pow(2, WorldValues.MIN_SUPPORTED_BIT_RES - 10), 0));
-        spacePoints.Add(new Vector3(Mathf.Pow(2, WorldValues.MIN_SUPPORTED_BIT_RES - 10), 0, 0));
+        spacePoints.Add(new Vector3(0, Maths.IntPow(2, (ulong)WorldValues.MIN_SUPPORTED_BIT_RES), 0));
+        spacePoints.Add(new Vector3(Maths.IntPow(2, (ulong)WorldValues.MIN_SUPPORTED_BIT_RES), 
+            Maths.IntPow(2, (ulong)WorldValues.MIN_SUPPORTED_BIT_RES), 0));
+        spacePoints.Add(new Vector3(Maths.IntPow(2, (ulong)WorldValues.MIN_SUPPORTED_BIT_RES), 0, 0));
 
         // Add vertices of anything that must be pathed around (bases, walls, etc)
         // CircleMcCollider[] circles = GetComponentsInChildren<CircleMcCollider>();
@@ -244,7 +240,7 @@ public class NavMesh
         if (startTri == -1 || endTri == -1)
         {
             Debug.Log("User cannot move to occupied space, or a space off the map.");
-            // throw new System.Exception("Destination, or maybe even start triangle, not found.");
+            return new List<Vector3>();
         }
 
         // A* through the list of triangles to find the shortest path of triangles
